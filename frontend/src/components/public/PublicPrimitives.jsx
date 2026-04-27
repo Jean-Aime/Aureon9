@@ -25,11 +25,11 @@ export function SectionBlock({ title, description, children }) {
 
 export function ShowcaseCard({ title, icon: Icon, children, compact = false }) {
   return (
-    <Card className="rounded-[2rem] border-white/60 bg-white/85 shadow-lg shadow-[rgba(10,37,64,0.08)] backdrop-blur">
+    <Card className="group rounded-[2rem] border-white/60 bg-white/85 shadow-lg shadow-[rgba(10,37,64,0.08)] backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[rgba(10,37,64,0.14)] hover:border-[rgba(10,37,64,0.15)]">
       <CardContent className={compact ? 'p-5' : 'p-6'}>
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900">
-            <Icon className="h-5 w-5 text-white" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 transition-colors duration-300 group-hover:bg-[var(--aureon-ink)]">
+            <Icon className="h-5 w-5 text-slate-900 transition-colors duration-300 group-hover:text-white" />
           </div>
           <p className="font-heading text-xl font-semibold tracking-tight text-[var(--aureon-ink)]">{title}</p>
         </div>
@@ -41,9 +41,9 @@ export function ShowcaseCard({ title, icon: Icon, children, compact = false }) {
 
 export function InfoRow({ icon: Icon, text }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/85 px-4 py-3 text-sm text-slate-700 shadow-sm">
-      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-900">
-        <Icon className="h-4 w-4 text-white" />
+    <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/85 px-4 py-3 text-sm text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-100">
+        <Icon className="h-4 w-4 text-slate-900" />
       </div>
       <span>{text}</span>
     </div>
@@ -52,10 +52,10 @@ export function InfoRow({ icon: Icon, text }) {
 
 export function StatPanel({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
+    <div className="group rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 cursor-default">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 shadow-sm">
-          <Icon className="h-5 w-5 text-white" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm transition-colors duration-300 group-hover:bg-[var(--aureon-ink)]">
+          <Icon className="h-5 w-5 text-slate-900 transition-colors duration-300 group-hover:text-white" />
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{label}</p>

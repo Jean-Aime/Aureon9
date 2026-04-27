@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
   BellRing,
@@ -6,12 +7,15 @@ import {
   Clock3,
   FileCheck2,
   Filter,
+  Menu,
   Search,
   Settings,
   ShieldCheck,
   Upload,
   Users,
+  X,
   XCircle,
+  LogOut,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -128,8 +132,10 @@ function Metric({ title, value, sub, icon: Icon }) {
 }
 
 export default function AdminReviewModule() {
-  const { auth } = useAuth();
+  const navigate = useNavigate();
+  const { auth, logout } = useAuth();
   const [activeNav, setActiveNav] = useState('queue');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [queue, setQueue] = useState([]);
   const [selectedQueueId, setSelectedQueueId] = useState('');
   const [loading, setLoading] = useState(true);
@@ -143,6 +149,16 @@ export default function AdminReviewModule() {
   });
   const [notes, setNotes] = useState('');
   const [requiredDocuments, setRequiredDocuments] = useState('');
+
+  async function handleLogout() {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/login');
+    }
+  }
 
   async function loadQueue(nextFilters = filters) {
     setLoading(true);
@@ -225,17 +241,36 @@ export default function AdminReviewModule() {
     : '0%';
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[280px_1fr]">
-        <aside className="border-r border-slate-200 bg-white px-4 py-5">
-          <div className="mb-6 flex items-center gap-3 px-2">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0A2540] text-white">
-              <ShieldCheck className="h-5 w-5" />
+    <div className="min-h-screen bg-slate-50 text-slate-900 lg:h-screen lg:overflow-hidden">
+      <div className="grid min-h-screen grid-cols-1 lg:h-screen lg:grid-cols-[280px_1fr]">
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 w-[280px] border-r border-slate-200 bg-white px-4 py-5 overflow-y-auto transition-transform lg:static lg:z-auto lg:h-screen lg:translate-x-0 ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          }`}
+        >
+          <div className="mb-6 flex items-center justify-between gap-3 px-2">
+            <div className="flex items-center gap-3">
+              <img src="/images/AUREON9.png" alt="AUREON9 logo" className="h-11 w-11 object-contain" />
+              <div>
+                <h1 className="text-lg font-semibold">AUREON9</h1>
+                <p className="text-xs text-slate-500">Global membership and rewards</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium tracking-wide text-slate-500">Powered By ODIEBOARD</p>
-              <h1 className="text-lg font-semibold">AUREON9 Admin</h1>
-            </div>
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
           <div className="mb-5 px-2">
@@ -257,14 +292,17 @@ export default function AdminReviewModule() {
             </div>
           </div>
 
-          <nav className="space-y-1">
+          <nav className="space-y-1 pr-2">
             {nav.map((item) => {
               const Icon = item.icon;
               const isActive = item.id === activeNav;
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveNav(item.id)}
+                  onClick={() => {
+                    setActiveNav(item.id);
+                    setSidebarOpen(false);
+                  }}
                   className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm transition ${isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
                 >
                   <Icon className="h-4 w-4" />
@@ -287,14 +325,36 @@ export default function AdminReviewModule() {
               </div>
             </div>
           </div>
+
+          {/* Bottom Action Buttons */}
+          <div className="mt-6 border-t border-slate-200 pt-4 space-y-2">
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="w-full rounded-2xl border-red-200 text-red-600 hover:bg-red-50 justify-start"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </aside>
 
-        <main className="flex flex-col">
+        <main className="flex min-h-0 flex-col lg:overflow-hidden">
           <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 px-5 py-4 backdrop-blur">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Verification, Documents, Governance Controls</p>
-                <h2 className="text-2xl font-semibold tracking-tight">Review Workflow Console</h2>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 lg:hidden"
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label="Open sidebar"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Verification, Documents, Governance Controls</p>
+                  <h2 className="text-2xl font-semibold tracking-tight">Review Workflow Console</h2>
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative w-full lg:w-72">
@@ -341,7 +401,7 @@ export default function AdminReviewModule() {
             </div>
           </header>
 
-          <div className="space-y-6 p-5 lg:p-6">
+          <div className="space-y-6 p-5 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:p-6">
             {error && <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
             {notice && <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div>}
 

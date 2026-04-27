@@ -1,6 +1,7 @@
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, LogOut, Globe } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
 
 export interface SidebarNavItem {
   id: string;
@@ -15,6 +16,8 @@ export interface SidebarProps {
   navItems: SidebarNavItem[];
   activeNavId: string;
   onNavItemClick: (id: string) => void;
+  onLogout?: () => void;
+  onVisitWebsite?: () => void;
   userCard?: {
     initials: string;
     name: string;
@@ -37,23 +40,26 @@ export default function Sidebar({
   navItems,
   activeNavId,
   onNavItemClick,
+  onLogout,
   userCard,
   statusCard,
 }: SidebarProps) {
   return (
-    <aside className="border-r border-slate-200 bg-white px-4 py-5 min-h-screen overflow-y-auto">
+    <aside className="flex flex-col border-r border-slate-200 bg-white px-4 py-5 min-h-screen">
       {/* Header */}
       <div className="mb-6 flex items-center gap-3 px-2">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0A2540] text-white">
-          {typeof logo === 'string' ? (
+          {typeof logo === 'string' && /\.(png|jpg|jpeg|svg|webp)$/.test(logo) ? (
+            <img src={logo} alt="" className="h-7 w-7 object-contain" />
+          ) : typeof logo === 'string' ? (
             <span>{logo}</span>
           ) : (
             React.createElement(logo, { className: 'h-5 w-5' })
           )}
         </div>
         <div>
-          <p className="text-sm font-medium tracking-wide text-slate-500">Powered By ODIEBOARD</p>
           <h1 className="text-lg font-semibold">{logoText}</h1>
+          <p className="text-xs text-slate-500">{subtitle}</p>
         </div>
       </div>
 
@@ -93,8 +99,8 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* Navigation */}
-      <nav className="space-y-1">
+      {/* Navigation - Scrollable */}
+      <nav className="flex-1 space-y-1 overflow-y-auto pr-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = item.id === activeNavId;
@@ -128,6 +134,20 @@ export default function Sidebar({
           </div>
         </>
       )}
+
+      {/* Bottom Action Buttons */}
+      <div className="mt-6 border-t border-slate-200 pt-4 space-y-2">
+        {onLogout && (
+          <Button
+            onClick={onLogout}
+            variant="outline"
+            className="w-full rounded-2xl border-red-200 text-red-600 hover:bg-red-50 justify-start"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+        )}
+      </div>
     </aside>
   );
 }

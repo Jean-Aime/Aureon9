@@ -4,7 +4,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { publicNav } from '../../data/publicSiteContent';
 
-const brandLogo = '/images/AUREON9%E2%84%A2.png';
+const brandLogo = '/images/AUREON9.png';
 const odieLogo  = '/images/Powered_By_ODIEBOARD.png';
 
 function NavButton({ label, to, fullWidth = false }) {
@@ -44,11 +44,11 @@ export default function PublicLayout() {
 
       <header className="sticky top-0 z-30 border-b border-white/50 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <NavLink to="/" className="flex items-center gap-3 text-left">
+          <NavLink to="/" className="flex shrink-0 items-center gap-3 text-left">
             <img src={brandLogo} alt="AUREON9 logo" className="h-14 w-14 object-contain" />
             <div>
               <p className="font-heading text-xl font-semibold tracking-tight text-[var(--aureon-ink)]">AUREON9</p>
-              <p className="text-xs text-slate-500">Global membership and rewards</p>
+              <p className="whitespace-nowrap text-xs text-slate-500">Global membership and rewards</p>
             </div>
           </NavLink>
 
@@ -62,8 +62,8 @@ export default function PublicLayout() {
             <Button asChild variant="outline" className="rounded-full border-slate-300">
               <NavLink to="/login">Login</NavLink>
             </Button>
-            <Button asChild className="rounded-full bg-[var(--aureon-ink)] px-5 hover:bg-[#14385f]">
-              <NavLink to="/request-access">Request Access</NavLink>
+            <Button asChild className="whitespace-nowrap rounded-full bg-[var(--aureon-ink)] px-5 hover:bg-[#14385f]">
+              <NavLink to="/register">Become a Member</NavLink>
             </Button>
           </div>
 
@@ -87,7 +87,7 @@ export default function PublicLayout() {
                   <NavLink to="/login">Login</NavLink>
                 </Button>
                 <Button asChild className="rounded-full bg-[var(--aureon-ink)] hover:bg-[#14385f]">
-                  <NavLink to="/request-access">Request Access</NavLink>
+                  <NavLink to="/register">Become a Member</NavLink>
                 </Button>
               </div>
             </div>

@@ -1,8 +1,30 @@
 import React from 'react';
 import { ShieldCheck, Wallet } from 'lucide-react';
+import {
+  HiOutlineAcademicCap,
+  HiOutlineCash,
+  HiOutlineChip,
+  HiOutlineCurrencyDollar,
+  HiOutlineLightningBolt,
+  HiOutlineSparkles,
+  HiOutlineStar,
+  HiOutlineTrendingUp,
+  HiOutlineUserGroup,
+} from 'react-icons/hi';
 import { PageHero, SectionBlock, InfoRow, ShowcaseCard } from '../../components/public/PublicPrimitives';
 import { aurexIntegration, rewardControls, rewardTypes } from '../../data/publicSiteContent';
-import { Coins } from 'lucide-react';
+
+const rewardIcons = [
+  HiOutlineCash, // ARX rewards
+  HiOutlineCurrencyDollar, // commissions
+  HiOutlineUserGroup, // referrals
+  HiOutlineTrendingUp, // performance
+  HiOutlineSparkles, // tier multipliers
+  HiOutlineStar, // loyalty
+  HiOutlineLightningBolt, // activity
+  HiOutlineAcademicCap, // founding
+  HiOutlineChip, // ecosystem contribution
+];
 
 export default function RewardsPage() {
   return (
@@ -10,8 +32,10 @@ export default function RewardsPage() {
       <PageHero title="Rewards System" intro="The rewards page explains what participants can earn, how AUREX connects, and how controls prevent abuse." />
       <SectionBlock eyebrow="Reward Engine" title="What participants can earn" description="These reward types are named directly in the master prompt.">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {rewardTypes.map((reward) => (
-            <ShowcaseCard key={reward} title={reward} icon={Coins} compact><p className="text-sm leading-6 text-slate-600">Reward logic later depends on triggers, calculations, distribution, expiry, and anti-abuse control.</p></ShowcaseCard>
+          {rewardTypes.map((reward, index) => (
+            <ShowcaseCard key={reward} title={reward} icon={rewardIcons[index]} compact>
+              <p className="text-sm leading-6 text-slate-600">Reward logic later depends on triggers, calculations, distribution, expiry, and anti-abuse control.</p>
+            </ShowcaseCard>
           ))}
         </div>
       </SectionBlock>

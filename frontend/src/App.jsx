@@ -1,6 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
-import { Home, LogOut } from 'lucide-react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import PublicLayout from './components/public/PublicLayout';
@@ -20,39 +19,14 @@ import AdminSettingsDashboard from './pages/AdminSettingsDashboard';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
-  
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
-  
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
-}
-
-function DashboardFrame({ children }) {
-  const navigate = useNavigate();
-  const { logout, auth } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  return (
-    <div className="min-h-screen">
-      <div className="fixed right-4 top-4 z-50 flex gap-2">
-        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 px-4 py-2 text-sm text-slate-700 shadow-lg backdrop-blur">
-          <span className="font-medium">{auth?.name || 'User'}</span>
-        </div>
-        <button onClick={handleLogout} className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50/95 px-4 py-2 text-sm font-medium text-red-700 shadow-lg backdrop-blur hover:bg-red-100">
-          <LogOut className="h-4 w-4" />Logout
-        </button>
-        <button onClick={() => navigate('/')} className="inline-flex items-center gap-2 rounded-full bg-[#0A2540] px-4 py-2 text-sm font-medium text-white shadow-lg hover:bg-[#14385f]">
-          <Home className="h-4 w-4" />Website
-        </button>
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="text-sm text-slate-500">Loading...</div>
       </div>
-      {children}
-    </div>
-  );
+    );
+  }
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
 export default function App() {
@@ -75,9 +49,9 @@ export default function App() {
             <Route path="/forgot-password" element={<AuthPage />} />
             <Route path="/verification-pending" element={<AuthPage />} />
           </Route>
-          <Route path="/dashboard/member" element={<ProtectedRoute><DashboardFrame><MemberDashboard /></DashboardFrame></ProtectedRoute>} />
-          <Route path="/dashboard/admin-review" element={<ProtectedRoute><DashboardFrame><AdminReviewModule /></DashboardFrame></ProtectedRoute>} />
-          <Route path="/dashboard/admin-settings" element={<ProtectedRoute><DashboardFrame><AdminSettingsDashboard /></DashboardFrame></ProtectedRoute>} />
+          <Route path="/dashboard/member" element={<ProtectedRoute><MemberDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/admin-review" element={<ProtectedRoute><AdminReviewModule /></ProtectedRoute>} />
+          <Route path="/dashboard/admin-settings" element={<ProtectedRoute><AdminSettingsDashboard /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

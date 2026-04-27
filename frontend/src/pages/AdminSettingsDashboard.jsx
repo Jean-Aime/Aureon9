@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Settings, BellRing, ShieldCheck, Mail, MessageSquare, Clock3, BarChart3,
   Activity, AlertTriangle, CheckCircle2, XCircle, Search, Filter, Save,
-  SlidersHorizontal, Gauge, Users, Workflow, ChevronRight, LayoutGrid
+  SlidersHorizontal, Gauge, Users, Workflow, ChevronRight, LayoutGrid,
+  LogOut, Menu, X
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -14,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Textarea } from '../components/ui/Textarea';
 import { Progress } from '../components/ui/Progress';
 import { Separator } from '../components/ui/Separator';
+import { useAuth } from '../hooks/useAuth';
 
 const sideNav = [
   { id: 'overview', label: 'Overview', icon: LayoutGrid },
@@ -43,6 +46,7 @@ const templateRows = [
   { code: 'DOCUMENT_REQUESTED_MORE', channel: 'EMAIL', active: true, lastUpdated: '2026-04-20', owner: 'Legal Compliance' },
   { code: 'REVIEW_APPROVED', channel: 'IN_APP', active: true, lastUpdated: '2026-04-21', owner: 'Customer Success' },
   { code: 'REVIEW_ESCALATED', channel: 'EMAIL', active: true, lastUpdated: '2026-04-21', owner: 'Executive Governance' },
+  { code: 'REVIEWER_REMINDER_DUE', channel: 'IN_APP', active: true, lastUpdated: '2026-04-21', owner: 'Operations Control' },
 ];
 
 const eventAnalytics = [
@@ -50,6 +54,14 @@ const eventAnalytics = [
   { event: 'DOCUMENT_REQUESTED_MORE', sent: 2318, delivered: 2256, failed: 62, rate: 97 },
   { event: 'REVIEW_APPROVED', sent: 7926, delivered: 7881, failed: 45, rate: 99 },
   { event: 'REVIEW_REJECTED', sent: 466, delivered: 454, failed: 12, rate: 97 },
+  { event: 'REVIEWER_REMINDER_DUE', sent: 1774, delivered: 1731, failed: 43, rate: 98 },
+];
+
+const queueAgingRows = [
+  { band: '0-24 Hours', count: 186, status: 'Healthy' },
+  { band: '24-48 Hours', count: 41, status: 'Watch' },
+  { band: '48-72 Hours', count: 12, status: 'Escalate' },
+  { band: '>72 Hours', count: 4, status: 'Critical' },
 ];
 
 function StatusPill({ label }) {
@@ -88,21 +100,53 @@ function MetricCard({ label, value, sub, icon: Icon }) {
 }
 
 export default function AdminSettingsDashboard() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const [activeNav, setActiveNav] = useState('overview');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const currentTitle = useMemo(() => sideNav.find((i) => i.id === activeNav)?.label || 'Overview', [activeNav]);
 
+  async function handleLogout() {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/login');
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[280px_1fr]">
-        <aside className="border-r border-slate-200 bg-white px-4 py-5">
-          <div className="mb-6 flex items-center gap-3 px-2">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0A2540] text-white">
-              <Settings className="h-5 w-5" />
+    <div className="min-h-screen bg-slate-50 text-slate-900 lg:h-screen lg:overflow-hidden">
+      <div className="grid min-h-screen grid-cols-1 lg:h-screen lg:grid-cols-[280px_1fr]">
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 w-[280px] border-r border-slate-200 bg-white px-4 py-5 overflow-y-auto transition-transform lg:static lg:z-auto lg:h-screen lg:translate-x-0 ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          }`}
+        >
+          <div className="mb-6 flex items-center justify-between gap-3 px-2">
+            <div className="flex items-center gap-3">
+              <img src="/images/AUREON9.png" alt="AUREON9 logo" className="h-11 w-11 object-contain" />
+              <div>
+                <h1 className="text-lg font-semibold">AUREON9</h1>
+                <p className="text-xs text-slate-500">Global membership and rewards</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium tracking-wide text-slate-500">Powered By ODIEBOARD</p>
-              <h1 className="text-lg font-semibold">Notification Control</h1>
-            </div>
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
           <div className="mb-5 px-2">
@@ -114,14 +158,17 @@ export default function AdminSettingsDashboard() {
             </div>
           </div>
 
-          <nav className="space-y-1">
+          <nav className="space-y-1 pr-2">
             {sideNav.map((item) => {
               const Icon = item.icon;
               const active = activeNav === item.id;
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveNav(item.id)}
+                  onClick={() => {
+                    setActiveNav(item.id);
+                    setSidebarOpen(false);
+                  }}
                   className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm transition ${active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
                 >
                   <Icon className="h-4 w-4" />
@@ -144,14 +191,35 @@ export default function AdminSettingsDashboard() {
               </div>
             </div>
           </div>
+
+          <div className="mt-6 border-t border-slate-200 pt-4 space-y-2">
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="w-full rounded-2xl border-red-200 text-red-600 hover:bg-red-50 justify-start"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </aside>
 
-        <main className="flex flex-col">
+        <main className="flex min-h-0 flex-col lg:overflow-hidden">
           <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 px-5 py-4 backdrop-blur">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">AUREON9 Notification Governance + Delivery Intelligence</p>
-                <h2 className="text-2xl font-semibold tracking-tight">{currentTitle}</h2>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 lg:hidden"
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label="Open sidebar"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">AUREON9 Notification Governance + Delivery Intelligence</p>
+                  <h2 className="text-2xl font-semibold tracking-tight">{currentTitle}</h2>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="relative w-full lg:w-80">
@@ -168,7 +236,7 @@ export default function AdminSettingsDashboard() {
             </div>
           </header>
 
-          <div className="space-y-6 p-5 lg:p-6">
+          <div className="space-y-6 p-5 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:p-6">
             <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {topMetrics.map((metric) => (
                 <MetricCard key={metric.label} {...metric} />
@@ -205,6 +273,15 @@ export default function AdminSettingsDashboard() {
                               <Switch checked={row.enabled} />
                             </div>
                           </div>
+                          <div className="mt-4 grid gap-3 md:grid-cols-3">
+                            <Input className="rounded-2xl border-slate-200" defaultValue={row.provider} />
+                            <Input className="rounded-2xl border-slate-200" defaultValue={row.retryWindow} />
+                            <select className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900">
+                              <option>Primary</option>
+                              <option>Fallback</option>
+                              <option>Disabled</option>
+                            </select>
+                          </div>
                         </div>
                       ))}
                     </TabsContent>
@@ -218,6 +295,7 @@ export default function AdminSettingsDashboard() {
                               <TableHead>Channel</TableHead>
                               <TableHead>Status</TableHead>
                               <TableHead>Owner</TableHead>
+                              <TableHead>Last Updated</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -227,6 +305,7 @@ export default function AdminSettingsDashboard() {
                                 <TableCell>{row.channel}</TableCell>
                                 <TableCell>{row.active ? <StatusPill label="Active" /> : <StatusPill label="Inactive" />}</TableCell>
                                 <TableCell>{row.owner}</TableCell>
+                                <TableCell>{row.lastUpdated}</TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
@@ -281,12 +360,7 @@ export default function AdminSettingsDashboard() {
                       <StatusPill label="Healthy" />
                     </div>
                     <div className="space-y-4">
-                      {[
-                        { band: '0–24 Hours', count: 186, status: 'Healthy' },
-                        { band: '24–48 Hours', count: 41, status: 'Watch' },
-                        { band: '48–72 Hours', count: 12, status: 'Escalate' },
-                        { band: '>72 Hours', count: 4, status: 'Critical' },
-                      ].map((row) => (
+                      {queueAgingRows.map((row) => (
                         <div key={row.band}>
                           <div className="mb-1 flex items-center justify-between text-sm">
                             <span>{row.band}</span>

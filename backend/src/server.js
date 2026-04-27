@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { randomUUID } from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { compare, hash } from 'bcryptjs';
@@ -132,9 +133,15 @@ app.get('/health', (_req, res) => {
 
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { email, name, participantClassCode, password } = req.body;
+    const { email, name, participantClassCode, password, country, phone, businessName, referralCode } = req.body;
 
-    if (!validateEmail(email) || !name || !validateParticipantClass(participantClassCode) || !validatePassword(password)) {
+    if (
+      !validateEmail(email) ||
+      !name ||
+      !validateParticipantClass(participantClassCode) ||
+      !validatePassword(password) ||
+      !country
+    ) {
       return res.status(400).json({ error: 'Invalid registration payload' });
     }
 
@@ -143,14 +150,21 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(409).json({ error: 'User already exists' });
     }
 
-    const [defaultTier, participantClass, passwordHash] = await Promise.all([
+    const [defaultTier, participantClass, passwordHash, referrer] = await Promise.all([
       prisma.membershipTier.findUnique({ where: { code: 'MEMBER' } }),
       prisma.participantClass.findUnique({ where: { code: participantClassCode } }),
       hash(password, 10),
+      referralCode
+        ? prisma.memberProfile.findUnique({ where: { referralCode: String(referralCode).trim() } })
+        : Promise.resolve(null),
     ]);
 
     if (!defaultTier || !participantClass) {
       return res.status(400).json({ error: 'Invalid participant class or tier' });
+    }
+
+    if (referralCode && !referrer) {
+      return res.status(400).json({ error: 'Invalid referral code' });
     }
 
     const user = await prisma.$transaction(async (tx) => {
@@ -166,7 +180,11 @@ app.post('/api/auth/register', async (req, res) => {
               displayName: name,
               participantClassId: participantClass.id,
               tierId: defaultTier.id,
-              referralCode: `${participantClassCode.substring(0, 3)}-${Date.now()}`,
+              country: String(country).trim(),
+              phone: phone ? String(phone).trim() : null,
+              businessName: businessName ? String(businessName).trim() : null,
+              referredByProfileId: referrer?.id ?? null,
+              referralCode: randomUUID().slice(0, 8).toUpperCase(),
             },
           },
         },
@@ -180,6 +198,17 @@ app.post('/api/auth/register', async (req, res) => {
           currencyCode: 'ARX',
         },
       });
+
+      if (referrer) {
+        await tx.referral.create({
+          data: {
+            senderProfileId: referrer.id,
+            receiverProfileId: createdUser.memberProfile.id,
+            receiverEmail: email,
+            status: 'PENDING',
+          },
+        });
+      }
 
       return createdUser;
     });

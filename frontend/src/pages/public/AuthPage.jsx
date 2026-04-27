@@ -1,147 +1,326 @@
 import React, { useState } from 'react';
-import { Building2 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { HiOutlineOfficeBuilding } from 'react-icons/hi';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
-import { authContent, pageCopy, participantClassOptions } from '../../data/publicSiteContent';
+import { participantClassOptions } from '../../data/publicSiteContent';
 import { useAuth } from '../../hooks/useAuth';
+
+const COUNTRIES = [
+  'Afghanistan','Albania','Algeria','Angola','Argentina','Australia','Austria','Bangladesh',
+  'Belgium','Bolivia','Brazil','Cameroon','Canada','Chile','China','Colombia','Congo',
+  'Côte d\'Ivoire','Denmark','Ecuador','Egypt','Ethiopia','Finland','France','Germany',
+  'Ghana','Greece','Guatemala','Guinea','Haiti','Honduras','Hungary','India','Indonesia',
+  'Iran','Iraq','Ireland','Israel','Italy','Jamaica','Japan','Jordan','Kazakhstan','Kenya',
+  'Madagascar','Malawi','Malaysia','Mali','Mexico','Morocco','Mozambique','Myanmar',
+  'Netherlands','New Zealand','Nicaragua','Niger','Nigeria','Norway','Pakistan','Panama',
+  'Paraguay','Peru','Philippines','Poland','Portugal','Romania','Russia','Rwanda',
+  'Saudi Arabia','Senegal','Sierra Leone','Singapore','Somalia','South Africa','South Korea',
+  'Spain','Sri Lanka','Sudan','Sweden','Switzerland','Syria','Tanzania','Thailand','Tunisia',
+  'Turkey','Uganda','Ukraine','United Arab Emirates','United Kingdom','United States',
+  'Uruguay','Venezuela','Vietnam','Yemen','Zambia','Zimbabwe',
+];
 
 export default function AuthPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { login, register } = useAuth();
   const route = location.pathname;
-  const content = authContent[route];
-  const copy = pageCopy[route];
-  const [form, setForm] = useState({
+
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [registerForm, setRegisterForm] = useState({
     name: '',
-    participantClassCode: 'GENERAL_MEMBER',
     email: '',
     password: '',
+    confirmPassword: '',
+    participantClassCode: 'GENERAL_MEMBER',
+    country: '',
+    phone: '',
+    businessName: '',
+    referralCode: '',
   });
   const [status, setStatus] = useState({ loading: false, error: '', success: '' });
 
-  const updateField = (key, value) => {
-    setForm((current) => ({ ...current, [key]: value }));
-  };
+  const updateLogin = (key, value) => setLoginForm((f) => ({ ...f, [key]: value }));
+  const updateRegister = (key, value) => setRegisterForm((f) => ({ ...f, [key]: value }));
 
-  const submitAuth = async () => {
-    if (route === '/forgot-password' || route === '/verification-pending') {
+  async function handleLogin() {
+    if (!loginForm.email || !loginForm.password) {
+      setStatus({ loading: false, error: 'Email and password are required.', success: '' });
       return;
     }
-
+    setStatus({ loading: true, error: '', success: '' });
     try {
-      setStatus({ loading: true, error: '', success: '' });
-
-      if (route === '/register') {
-        const result = await register({
-          name: form.name,
-          participantClassCode: form.participantClassCode,
-          email: form.email,
-          password: form.password,
-        });
-        if (!result.success) {
-          throw new Error(result.error);
-        }
-        setStatus({ loading: false, error: '', success: 'Registration completed. Redirecting to dashboard access.' });
-        navigate('/dashboard/member');
-        return;
-      }
-
-      const result = await login(form.email, form.password);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
+      const result = await login(loginForm.email, loginForm.password);
+      if (!result.success) throw new Error(result.error);
       const adminRoles = ['SUPER_ADMIN', 'EXECUTIVE', 'LEGAL_COMPLIANCE', 'QUALIFICATIONS', 'CUSTOMER_SUCCESS', 'FINANCE_TREASURY'];
       const isAdmin = adminRoles.includes(result.user?.role);
-
-      setStatus({ loading: false, error: '', success: `Login successful. Redirecting to ${isAdmin ? 'admin' : 'member'} dashboard.` });
-      navigate(isAdmin ? '/dashboard/admin-review' : '/dashboard/member');
-    } catch (error) {
-      const message = error.response?.data?.error || 'Unable to complete authentication';
-      setStatus({ loading: false, error: message, success: '' });
+      setStatus({ loading: false, error: '', success: 'Login successful. Redirecting...' });
+      setTimeout(() => navigate(isAdmin ? '/dashboard/admin-review' : '/dashboard/member'), 600);
+    } catch (err) {
+      setStatus({ loading: false, error: err.message || 'Login failed. Check your credentials.', success: '' });
     }
-  };
+  }
 
-  return (
-    <div className="flex min-h-[calc(100vh-14rem)] items-center justify-center py-8">
-      <Card className="w-full max-w-xl rounded-[2rem] border-white/60 bg-white/90 shadow-2xl shadow-[rgba(10,37,64,0.10)] backdrop-blur">
-        <CardContent className="space-y-6 p-6 sm:p-8">
-          <div className="text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[var(--aureon-ink)] text-white shadow-lg shadow-[rgba(10,37,64,0.20)]"><Building2 className="h-7 w-7" /></div>
-            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Authentication</p>
-            <h1 className="mt-3 font-heading text-3xl font-semibold tracking-tight text-[var(--aureon-ink)]">{copy.title}</h1>
-            <p className="mt-3 text-sm leading-7 text-slate-600">{copy.intro}</p>
-          </div>
+  async function handleRegister() {
+    const { name, email, password, confirmPassword, participantClassCode, country } = registerForm;
+    if (!name || !email || !password || !participantClassCode || !country) {
+      setStatus({ loading: false, error: 'Full name, email, password, participant class, and country are required.', success: '' });
+      return;
+    }
+    if (password !== confirmPassword) {
+      setStatus({ loading: false, error: 'Passwords do not match.', success: '' });
+      return;
+    }
+    if (password.length < 8) {
+      setStatus({ loading: false, error: 'Password must be at least 8 characters.', success: '' });
+      return;
+    }
+    setStatus({ loading: true, error: '', success: '' });
+    try {
+      const result = await register({
+        name: registerForm.name,
+        email: registerForm.email,
+        password: registerForm.password,
+        participantClassCode: registerForm.participantClassCode,
+        country: registerForm.country,
+        phone: registerForm.phone || undefined,
+        businessName: registerForm.businessName || undefined,
+        referralCode: registerForm.referralCode || undefined,
+      });
+      if (!result.success) throw new Error(result.error);
+      setStatus({ loading: false, error: '', success: 'Account created successfully. Redirecting to your dashboard...' });
+      setTimeout(() => navigate('/dashboard/member'), 800);
+    } catch (err) {
+      setStatus({ loading: false, error: err.message || 'Registration failed. Please try again.', success: '' });
+    }
+  }
 
-          {route !== '/verification-pending' && (
-            <div className="grid gap-4">
-              {route === '/register' && (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Input value={form.name} onChange={(event) => updateField('name', event.target.value)} placeholder="Full name" />
+  if (route === '/forgot-password') {
+    return (
+      <div className="flex min-h-[calc(100vh-14rem)] items-center justify-center py-8">
+        <Card className="w-full max-w-md rounded-[2rem] border-white/60 bg-white/90 shadow-2xl backdrop-blur">
+          <CardContent className="space-y-6 p-6 sm:p-8">
+            <div className="text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[var(--aureon-ink)] text-white shadow-lg">
+                <HiOutlineOfficeBuilding className="h-7 w-7" />
+              </div>
+              <h1 className="mt-4 font-heading text-2xl font-semibold text-[var(--aureon-ink)]">Forgot Password</h1>
+              <p className="mt-2 text-sm text-slate-600">Enter your email to receive a reset link.</p>
+            </div>
+            <Input type="email" placeholder="Email address" />
+            {status.error && <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{status.error}</div>}
+            {status.success && <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{status.success}</div>}
+            <Button className="w-full rounded-full bg-[var(--aureon-ink)] hover:bg-[#14385f]"
+              onClick={() => setStatus({ loading: false, error: '', success: 'Password reset is not yet connected to the backend.' })}>
+              Send Reset Link
+            </Button>
+            <div className="text-center text-sm text-slate-500">
+              <button onClick={() => navigate('/login')} className="hover:text-[var(--aureon-ink)]">Back to Login</button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (route === '/verification-pending') {
+    return (
+      <div className="flex min-h-[calc(100vh-14rem)] items-center justify-center py-8">
+        <Card className="w-full max-w-md rounded-[2rem] border-white/60 bg-white/90 shadow-2xl backdrop-blur">
+          <CardContent className="space-y-6 p-6 sm:p-8 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-amber-100 text-amber-700 shadow-lg">
+              <HiOutlineOfficeBuilding className="h-7 w-7" />
+            </div>
+            <h1 className="font-heading text-2xl font-semibold text-[var(--aureon-ink)]">Verification Pending</h1>
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+              Your account access is limited until your submitted documents are reviewed and your verification state advances.
+            </div>
+            <Button className="w-full rounded-full bg-[var(--aureon-ink)] hover:bg-[#14385f]" onClick={() => navigate('/login')}>
+              Back to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // REGISTER
+  if (route === '/register') {
+    return (
+      <div className="flex min-h-[calc(100vh-14rem)] items-center justify-center py-12">
+        <Card className="w-full max-w-2xl rounded-[2rem] border-white/60 bg-white/90 shadow-2xl backdrop-blur">
+          <CardContent className="space-y-6 p-6 sm:p-8">
+            <div className="text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[var(--aureon-ink)] text-white shadow-lg">
+                <HiOutlineOfficeBuilding className="h-7 w-7" />
+              </div>
+              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Create Your Account</p>
+              <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight text-[var(--aureon-ink)]">Become a Member</h1>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Join AUREON9 — the governed membership, identity, and rewards platform.</p>
+            </div>
+
+            <div className="space-y-4">
+              {/* Personal Info */}
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Personal Information</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Input
+                    placeholder="Full legal name *"
+                    value={registerForm.name}
+                    onChange={(e) => updateRegister('name', e.target.value)}
+                  />
+                  <Input
+                    type="email"
+                    placeholder="Email address *"
+                    value={registerForm.email}
+                    onChange={(e) => updateRegister('email', e.target.value)}
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Password (min 8 characters) *"
+                    value={registerForm.password}
+                    onChange={(e) => updateRegister('password', e.target.value)}
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Confirm password *"
+                    value={registerForm.confirmPassword}
+                    onChange={(e) => updateRegister('confirmPassword', e.target.value)}
+                  />
+                  <Input
+                    type="tel"
+                    placeholder="Phone number"
+                    value={registerForm.phone}
+                    onChange={(e) => updateRegister('phone', e.target.value)}
+                  />
                   <select
-                    value={form.participantClassCode}
-                    onChange={(event) => updateField('participantClassCode', event.target.value)}
+                    value={registerForm.country}
+                    onChange={(e) => updateRegister('country', e.target.value)}
                     className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900"
                   >
-                    {participantClassOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
+                    <option value="">Select country *</option>
+                    {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-              )}
-              <Input type="email" value={form.email} onChange={(event) => updateField('email', event.target.value)} placeholder="Email address" />
-              {route !== '/forgot-password' && (
-                <Input type="password" value={form.password} onChange={(event) => updateField('password', event.target.value)} placeholder="Password" />
-              )}
-            </div>
-          )}
+              </div>
 
-          {route === '/verification-pending' && <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">Access remains limited until the required documents are reviewed and the verification state advances.</div>}
+              {/* Membership Classification */}
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Membership Classification</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <select
+                    value={registerForm.participantClassCode}
+                    onChange={(e) => updateRegister('participantClassCode', e.target.value)}
+                    className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900"
+                  >
+                    {participantClassOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <Input
+                    placeholder="Business / organisation name"
+                    value={registerForm.businessName}
+                    onChange={(e) => updateRegister('businessName', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Referral */}
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Referral (Optional)</p>
+                <Input
+                  placeholder="Referral code (if you were referred)"
+                  value={registerForm.referralCode}
+                  onChange={(e) => updateRegister('referralCode', e.target.value)}
+                />
+              </div>
+            </div>
+
+            {status.error && <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{status.error}</div>}
+            {status.success && <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{status.success}</div>}
+
+            <Button
+              className="w-full rounded-full bg-[var(--aureon-ink)] py-3 text-sm hover:bg-[#14385f]"
+              onClick={handleRegister}
+              disabled={status.loading}
+            >
+              {status.loading ? 'Creating account...' : 'Create Account'}
+            </Button>
+
+            <p className="text-center text-sm text-slate-500">
+              Already have an account?{' '}
+              <button onClick={() => navigate('/login')} className="font-semibold text-[var(--aureon-ink)] hover:underline">
+                Login
+              </button>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // LOGIN (default)
+  return (
+    <div className="flex min-h-[calc(100vh-14rem)] items-center justify-center py-8">
+      <Card className="w-full max-w-md rounded-[2rem] border-white/60 bg-white/90 shadow-2xl backdrop-blur">
+        <CardContent className="space-y-6 p-6 sm:p-8">
+          <div className="text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[var(--aureon-ink)] text-white shadow-lg">
+              <HiOutlineOfficeBuilding className="h-7 w-7" />
+            </div>
+            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Member Access</p>
+            <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight text-[var(--aureon-ink)]">Login</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Sign in to access your AUREON9 dashboard.</p>
+          </div>
+
+          <div className="grid gap-3">
+            <Input
+              type="email"
+              placeholder="Email address"
+              value={loginForm.email}
+              onChange={(e) => updateLogin('email', e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+            />
+            <Input
+              type="password"
+              placeholder="Password"
+              value={loginForm.password}
+              onChange={(e) => updateLogin('password', e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+            />
+            <div className="text-right">
+              <button onClick={() => navigate('/forgot-password')} className="text-xs text-slate-500 hover:text-[var(--aureon-ink)]">
+                Forgot password?
+              </button>
+            </div>
+          </div>
 
           {status.error && <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{status.error}</div>}
           {status.success && <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{status.success}</div>}
 
           <Button
-            className="w-full rounded-full bg-[var(--aureon-ink)] py-3 hover:bg-[#14385f]"
-            onClick={() => {
-              if (route === '/verification-pending') {
-                navigate('/login');
-                return;
-              }
-              if (route === '/forgot-password') {
-                setStatus({ loading: false, error: '', success: 'Password reset flow is not yet connected to the backend.' });
-                return;
-              }
-              submitAuth();
-            }}
+            className="w-full rounded-full bg-[var(--aureon-ink)] py-3 text-sm hover:bg-[#14385f]"
+            onClick={handleLogin}
             disabled={status.loading}
           >
-            {status.loading ? 'Please wait...' : content.primaryLabel}
+            {status.loading ? 'Signing in...' : 'Login'}
           </Button>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-500">
-            {route !== '/login' && <button onClick={() => navigate('/login')}>Login</button>}
-            {route !== '/register' && <button onClick={() => navigate('/register')}>Register</button>}
-            {route !== '/forgot-password' && <button onClick={() => navigate('/forgot-password')}>Forgot Password</button>}
-            {route !== '/verification-pending' && <button onClick={() => navigate('/verification-pending')}>Verification Pending</button>}
-          </div>
+          <p className="text-center text-sm text-slate-500">
+            Don't have an account?{' '}
+            <button onClick={() => navigate('/register')} className="font-semibold text-[var(--aureon-ink)] hover:underline">
+              Become a Member
+            </button>
+          </p>
 
-          {route === '/login' && (
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Current demo access</p>
-              <p className="mt-1 text-sm leading-6 text-slate-600">The dashboards already built in the codebase remain accessible while real auth is still unfinished.</p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <Button variant="outline" className="rounded-2xl border-slate-300" onClick={() => navigate('/dashboard/member')}>Member</Button>
-                <Button variant="outline" className="rounded-2xl border-slate-300" onClick={() => navigate('/dashboard/admin-review')}>Admin Review</Button>
-                <Button variant="outline" className="rounded-2xl border-slate-300" onClick={() => navigate('/dashboard/admin-settings')}>Admin Settings</Button>
-              </div>
-            </div>
-          )}
+          {/* Admin credentials hint for dev */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
+            <p className="font-semibold text-slate-700">Admin credentials</p>
+            <p className="mt-1">Email: admin@aureon9.com</p>
+            <p>Password: Admin@Aureon9!</p>
+          </div>
         </CardContent>
       </Card>
     </div>
