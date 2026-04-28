@@ -41,6 +41,12 @@ export const membersAPI = {
   getAll: () => apiClient.get('/api/members'),
   getById: (id) => apiClient.get(`/api/members/${id}`),
   update: (id, data) => apiClient.patch(`/api/members/${id}`, data),
+  getCapabilities: (id) => apiClient.get(`/api/members/${id}/capabilities`),
+  getPreferences: (id) => apiClient.get(`/api/members/${id}/preferences`),
+  updatePreferences: (id, data) => apiClient.patch(`/api/members/${id}/preferences`, data),
+  getPerformance: (id) => apiClient.get(`/api/members/${id}/performance`),
+  getUpgradePath: (id) => apiClient.get(`/api/members/${id}/upgrade-path`),
+  getNotifications: (id) => apiClient.get(`/api/members/${id}/notifications`),
 };
 
 // Verification Records API
@@ -70,6 +76,7 @@ export const documentsAPI = {
 // Wallets API
 export const walletsAPI = {
   getWallet: (memberProfileId) => apiClient.get(`/api/wallets/${memberProfileId}`),
+  getEarnings: (memberProfileId) => apiClient.get(`/api/wallets/${memberProfileId}/earnings`),
   createTransaction: (data) => apiClient.post('/api/wallet-transactions', data),
 };
 
@@ -106,6 +113,18 @@ export const reviewQueueAPI = {
   escalate: (data) => apiClient.post('/api/review-queue/escalate', data),
   assignReviewer: (data) => apiClient.post('/api/review-queue/assign-reviewer', data),
   requestMoreDocs: (data) => apiClient.post('/api/review-queue/request-more-docs', data),
+};
+
+export const adminPanelAPI = {
+  getUsers: () => apiClient.get('/api/admin/users'),
+  getConfig: () => apiClient.get('/api/admin/panel-config'),
+  updateChannels: (channels) => apiClient.patch('/api/admin/panel-config/channels', { channels }),
+  updateTemplates: (templates) => apiClient.patch('/api/admin/panel-config/templates', { templates }),
+  updateTimers: (timers, retryPolicy) => apiClient.patch('/api/admin/panel-config/timers', { timers, retryPolicy }),
+  updateRewardRules: (rewardRules) => apiClient.patch('/api/admin/panel-config/reward-rules', { rewardRules }),
+  updateGovernanceRules: (deliveryRules, escalationRules) =>
+    apiClient.patch('/api/admin/panel-config/governance-rules', { deliveryRules, escalationRules }),
+  getAnalytics: () => apiClient.get('/api/admin/panel-analytics'),
 };
 
 export default apiClient;

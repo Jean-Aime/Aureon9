@@ -17,8 +17,8 @@ import MemberDashboard from './pages/MemberDashboard';
 import AdminReviewModule from './pages/AdminReviewModule';
 import AdminSettingsDashboard from './pages/AdminSettingsDashboard';
 
-function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
+function ProtectedRoute({ children, allowedRoles }) {
+  const { isAuthenticated, loading, auth } = useAuth();
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -26,8 +26,16 @@ function ProtectedRoute({ children }) {
       </div>
     );
   }
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  if (allowedRoles?.length && !allowedRoles.includes(auth?.role)) {
+    return <Navigate to="/dashboard/member" replace />;
+  }
+  return children;
 }
+
+const adminRoles = ['SUPER_ADMIN', 'EXECUTIVE', 'LEGAL_COMPLIANCE', 'QUALIFICATIONS', 'CUSTOMER_SUCCESS', 'FINANCE_TREASURY'];
 
 export default function App() {
   return (
@@ -50,8 +58,8 @@ export default function App() {
             <Route path="/verification-pending" element={<AuthPage />} />
           </Route>
           <Route path="/dashboard/member" element={<ProtectedRoute><MemberDashboard /></ProtectedRoute>} />
-          <Route path="/dashboard/admin-review" element={<ProtectedRoute><AdminReviewModule /></ProtectedRoute>} />
-          <Route path="/dashboard/admin-settings" element={<ProtectedRoute><AdminSettingsDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/admin-review" element={<ProtectedRoute allowedRoles={adminRoles}><AdminReviewModule /></ProtectedRoute>} />
+          <Route path="/dashboard/admin-settings" element={<ProtectedRoute allowedRoles={adminRoles}><AdminSettingsDashboard /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

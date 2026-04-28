@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { HiOutlineOfficeBuilding } from 'react-icons/hi';
 import { Button } from '../../components/ui/Button';
@@ -41,6 +41,16 @@ export default function AuthPage() {
     referralCode: '',
   });
   const [status, setStatus] = useState({ loading: false, error: '', success: '' });
+
+  useEffect(() => {
+    const referralFromQuery = new URLSearchParams(location.search).get('ref');
+    if (route === '/register' && referralFromQuery) {
+      setRegisterForm((current) => ({
+        ...current,
+        referralCode: current.referralCode || referralFromQuery,
+      }));
+    }
+  }, [route, location.search]);
 
   const updateLogin = (key, value) => setLoginForm((f) => ({ ...f, [key]: value }));
   const updateRegister = (key, value) => setRegisterForm((f) => ({ ...f, [key]: value }));
@@ -320,6 +330,9 @@ export default function AuthPage() {
             <p className="font-semibold text-slate-700">Admin credentials</p>
             <p className="mt-1">Email: admin@aureon9.com</p>
             <p>Password: Admin@Aureon9!</p>
+            <p className="mt-2 font-semibold text-slate-700">Seed member credentials</p>
+            <p>Email examples: general.member@aureon9.com, channel.partner@aureon9.com</p>
+            <p>Password: Aureon9@2026!</p>
           </div>
         </CardContent>
       </Card>

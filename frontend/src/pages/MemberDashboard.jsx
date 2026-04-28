@@ -1,21 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
+  BarChart3,
   Bell,
   Briefcase,
   CheckCircle2,
   Crown,
   FileCheck,
   LayoutGrid,
+  LineChart,
+  LogOut,
   Menu,
   Search,
   Settings,
   ShieldCheck,
+  Store,
+  TrendingUp,
+  UserCircle2,
   Users,
   Wallet,
   X,
-  LogOut,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -33,18 +38,46 @@ import {
   referralsAPI,
   verificationAPI,
   walletsAPI,
+  referenceAPI,
 } from '../api/client';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { id: 'verification', label: 'Verification', icon: ShieldCheck },
-  { id: 'membership', label: 'Membership', icon: Crown },
+  { id: 'profile', label: 'Profile & Identity', icon: UserCircle2 },
+  { id: 'verification', label: 'Verification Center', icon: ShieldCheck },
+  { id: 'membership', label: 'Membership Tier', icon: Crown },
   { id: 'wallet', label: 'AUREX Wallet', icon: Wallet },
-  { id: 'referrals', label: 'AAL Referrals', icon: Users },
-  { id: 'opportunities', label: 'Opportunities', icon: Briefcase },
-  { id: 'documents', label: 'Documents', icon: FileCheck },
+  { id: 'earnings', label: 'Earnings', icon: TrendingUp },
+  { id: 'marketplace', label: 'Marketplace', icon: Store },
+  { id: 'referrals', label: 'Referral System', icon: Users },
+  { id: 'opportunities', label: 'Opportunities Feed', icon: Briefcase },
+  { id: 'documents', label: 'Documents & Compliance', icon: FileCheck },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'metrics', label: 'Performance Metrics', icon: BarChart3 },
+  { id: 'upgrade', label: 'Upgrade Path', icon: LineChart },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
+
+const defaultCapabilities = {
+  screens: navItems.reduce((acc, item) => ({ ...acc, [item.id]: true }), {}),
+  actions: {
+    canEditIdentity: true,
+    canChangePassword: true,
+    canRequestUpgrade: true,
+    canWithdraw: true,
+    canTransfer: true,
+    canBuyInvest: true,
+    canApplyOpportunity: true,
+    canViewTeamTree: true,
+    canViewCommissionBreakdown: true,
+    canOperateTradeFlows: false,
+    canAccessCapitalFeeds: false,
+    canAccessDeveloperTools: false,
+    canAccessSettlementControls: false,
+    canSellMarketplace: false,
+  },
+  profile: {},
+};
 
 const verificationLevels = [
   'UNVERIFIED',
@@ -67,9 +100,8 @@ function formatDate(value) {
   if (!value) {
     return 'N/A';
   }
-
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? 'N/A' : parsed.toLocaleDateString();
+  return Number.isNaN(parsed.getTime()) ? 'N/A' : parsed.toLocaleString();
 }
 
 function StatusBadge({ value }) {
@@ -85,6 +117,7 @@ function StatusBadge({ value }) {
     RECEIVED: 'bg-slate-100 text-slate-700 border-slate-200',
     ACCEPTED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     REPLACEMENT_REQUIRED: 'bg-amber-50 text-amber-700 border-amber-200',
+    RECORDED: 'bg-slate-100 text-slate-700 border-slate-200',
   };
 
   return (
@@ -124,15 +157,27 @@ export default function MemberDashboard() {
   const [notice, setNotice] = useState('');
   const [memberData, setMemberData] = useState(null);
   const [walletData, setWalletData] = useState(null);
+  const [earningsData, setEarningsData] = useState({ total: 0, bySource: [], latestTransactions: [] });
   const [verificationData, setVerificationData] = useState([]);
   const [referralData, setReferralData] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
   const [documents, setDocuments] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [performance, setPerformance] = useState(null);
+  const [upgradePath, setUpgradePath] = useState(null);
+  const [tiers, setTiers] = useState([]);
+  const [capabilities, setCapabilities] = useState(defaultCapabilities);
   const [settingsForm, setSettingsForm] = useState({
     displayName: '',
     country: '',
     phone: '',
     businessName: '',
+  });
+  const [preferenceState, setPreferenceState] = useState({
+    emailNotifications: true,
+    twoFactorEnabled: false,
+    linkedGoogle: false,
+    linkedLinkedIn: false,
   });
   const [verificationForm, setVerificationForm] = useState({
     requestedLevel: 'BASIC_VERIFIED',
@@ -148,14 +193,16 @@ export default function MemberDashboard() {
     file: null,
   });
 
-  const pageTitle = navItems.find((item) => item.id === activeNav)?.label || 'Dashboard';
+  const visibleNavItems = useMemo(() => {
+    return navItems.filter((item) => capabilities?.screens?.[item.id] !== false);
+  }, [capabilities]);
+  const pageTitle = visibleNavItems.find((item) => item.id === activeNav)?.label || 'Dashboard';
 
   async function handleLogout() {
     try {
       await logout();
       navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
+    } catch (_error) {
       navigate('/login');
     }
   }
@@ -167,15 +214,35 @@ export default function MemberDashboard() {
 
     setLoading(true);
     setError('');
-
     try {
-      const [memberRes, walletRes, verificationRes, referralRes, opportunitiesRes, documentsRes] = await Promise.all([
+      const [
+        memberRes,
+        walletRes,
+        verificationRes,
+        referralRes,
+        opportunitiesRes,
+        documentsRes,
+        earningsRes,
+        notificationsRes,
+        performanceRes,
+        upgradeRes,
+        tiersRes,
+        capabilitiesRes,
+        preferencesRes,
+      ] = await Promise.all([
         membersAPI.getById(profileId),
         walletsAPI.getWallet(profileId),
         verificationAPI.getAll(),
         referralsAPI.getAll(),
         opportunitiesAPI.getAll(),
         documentsAPI.getAll(),
+        walletsAPI.getEarnings(profileId),
+        membersAPI.getNotifications(profileId),
+        membersAPI.getPerformance(profileId),
+        membersAPI.getUpgradePath(profileId),
+        referenceAPI.getTiers(),
+        membersAPI.getCapabilities(profileId),
+        membersAPI.getPreferences(profileId),
       ]);
 
       const member = memberRes.data;
@@ -185,16 +252,24 @@ export default function MemberDashboard() {
       setReferralData(referralRes.data || []);
       setOpportunities(opportunitiesRes.data || []);
       setDocuments(documentsRes.data || []);
+      setEarningsData(earningsRes.data || { total: 0, bySource: [], latestTransactions: [] });
+      setNotifications(notificationsRes.data || []);
+      setPerformance(performanceRes.data || null);
+      setUpgradePath(upgradeRes.data || null);
+      setTiers(tiersRes.data || []);
+      setCapabilities(capabilitiesRes.data || defaultCapabilities);
+      setPreferenceState(preferencesRes.data || {
+        emailNotifications: true,
+        twoFactorEnabled: false,
+        linkedGoogle: false,
+        linkedLinkedIn: false,
+      });
       setSettingsForm({
         displayName: member.displayName || '',
         country: member.country || '',
         phone: member.phone || '',
         businessName: member.businessName || '',
       });
-      setVerificationForm((current) => ({
-        ...current,
-        requestedLevel: current.requestedLevel || 'BASIC_VERIFIED',
-      }));
     } catch (loadError) {
       setError(loadError.response?.data?.error || 'Failed to load the member workspace.');
     } finally {
@@ -208,37 +283,54 @@ export default function MemberDashboard() {
     }
   }, [auth?.memberProfileId]);
 
+  useEffect(() => {
+    if (!visibleNavItems.length) {
+      return;
+    }
+    if (!visibleNavItems.some((item) => item.id === activeNav)) {
+      setActiveNav(visibleNavItems[0].id);
+    }
+  }, [activeNav, visibleNavItems]);
+
   const currentVerificationIndex = verificationLevels.indexOf(memberData?.verificationLevel || 'UNVERIFIED');
   const verificationProgress = currentVerificationIndex >= 0 ? ((currentVerificationIndex + 1) / verificationLevels.length) * 100 : 0;
   const balanceValue = Number(walletData?.balance || 0);
-  const nextVerificationLevels = verificationLevels.filter((level) => level !== memberData?.verificationLevel);
-  const recentTransactions = walletData?.transactions || [];
   const referralCode = memberData?.referralCode || auth?.memberProfileId || 'UNAVAILABLE';
+  const nextTierName = useMemo(() => {
+    const nextCode = upgradePath?.nextTier;
+    if (!nextCode || !tiers.length) {
+      return 'Top tier reached';
+    }
+    const found = tiers.find((tier) => tier.code === nextCode);
+    return found?.name || formatEnum(nextCode);
+  }, [upgradePath?.nextTier, tiers]);
+  const marketplaceItems = opportunities.filter((item) => item.type === 'MARKETPLACE');
+  const pendingActions = (upgradePath?.checklist || []).filter((item) => !item.met);
 
   const stats = [
     {
       label: 'AUREX Balance',
       value: `ARX ${balanceValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
-      sub: `${recentTransactions.length} recorded wallet movements`,
+      sub: `${walletData?.transactions?.length || 0} wallet movements`,
       icon: Wallet,
     },
     {
-      label: 'Tier Status',
+      label: 'Current Tier',
       value: memberData?.tier?.name || 'Member',
       sub: `${formatEnum(memberData?.participantClass?.code || 'GENERAL_MEMBER')} class`,
       icon: Crown,
     },
     {
-      label: 'Referrals',
-      value: String(referralData.length || 0),
-      sub: 'Tracked referral records',
-      icon: Users,
+      label: 'Total Earnings',
+      value: `ARX ${Number(earningsData?.total || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+      sub: `${earningsData?.bySource?.length || 0} earning sources`,
+      icon: TrendingUp,
     },
     {
-      label: 'Verification',
-      value: formatEnum(memberData?.verificationLevel || 'UNVERIFIED'),
-      sub: `${verificationData.length} submitted verification cases`,
-      icon: ShieldCheck,
+      label: 'Notifications',
+      value: String(notifications.length || 0),
+      sub: 'Latest system alerts and updates',
+      icon: Bell,
     },
   ];
 
@@ -246,11 +338,9 @@ export default function MemberDashboard() {
     if (!auth?.memberProfileId) {
       return;
     }
-
     setSaving(true);
     setNotice('');
     setError('');
-
     try {
       await verificationAPI.create({
         memberProfileId: auth.memberProfileId,
@@ -271,11 +361,9 @@ export default function MemberDashboard() {
     if (!auth?.memberProfileId) {
       return;
     }
-
     setSaving(true);
     setNotice('');
     setError('');
-
     try {
       await referralsAPI.create({
         senderProfileId: auth.memberProfileId,
@@ -301,20 +389,17 @@ export default function MemberDashboard() {
     setSaving(true);
     setNotice('');
     setError('');
-
     try {
       const uploadUrlResponse = await documentsAPI.getUploadUrl({
         memberProfileId: auth.memberProfileId,
         fileName: documentForm.file.name,
         contentType: documentForm.file.type || 'application/octet-stream',
       });
-
       await documentsAPI.uploadBinary(
         uploadUrlResponse.data.uploadUrl,
         documentForm.file,
         documentForm.file.type || 'application/octet-stream'
       );
-
       await documentsAPI.finalizeUpload({
         memberProfileId: auth.memberProfileId,
         documentType: documentForm.documentType,
@@ -325,13 +410,8 @@ export default function MemberDashboard() {
         mimeType: documentForm.file.type || 'application/octet-stream',
         sizeBytes: documentForm.file.size,
       });
-
       setNotice('Document uploaded successfully.');
-      setDocumentForm({
-        documentType: documentForm.documentType,
-        verificationPurpose: documentForm.verificationPurpose,
-        file: null,
-      });
+      setDocumentForm((current) => ({ ...current, file: null }));
       await loadDashboard(auth.memberProfileId);
     } catch (uploadError) {
       setError(uploadError.response?.data?.error || 'Unable to upload document.');
@@ -344,11 +424,9 @@ export default function MemberDashboard() {
     if (!auth?.memberProfileId) {
       return;
     }
-
     setSaving(true);
     setNotice('');
     setError('');
-
     try {
       await membersAPI.update(auth.memberProfileId, settingsForm);
       setNotice('Profile updated.');
@@ -360,15 +438,39 @@ export default function MemberDashboard() {
     }
   }
 
+  async function handlePreferenceSave() {
+    if (!auth?.memberProfileId) {
+      return;
+    }
+    setSaving(true);
+    setNotice('');
+    setError('');
+    try {
+      const response = await membersAPI.updatePreferences(auth.memberProfileId, preferenceState);
+      setPreferenceState(response.data || preferenceState);
+      setNotice('Preference settings saved.');
+    } catch (saveError) {
+      setError(saveError.response?.data?.error || 'Unable to save preference settings.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function copyReferralLink() {
+    const link = `${window.location.origin}/register?ref=${encodeURIComponent(referralCode)}`;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(link);
+      setNotice('Referral link copied.');
+      return;
+    }
+    setNotice(link);
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 lg:h-screen lg:overflow-hidden">
       <div className="grid min-h-screen grid-cols-1 lg:h-screen lg:grid-cols-[280px_1fr]">
         {sidebarOpen && (
-          <div
-            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-            aria-hidden="true"
-          />
+          <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)} aria-hidden="true" />
         )}
         <aside
           className={`fixed inset-y-0 left-0 z-50 w-[280px] border-r border-slate-200 bg-white px-4 py-5 overflow-y-auto transition-transform lg:static lg:z-auto lg:h-screen lg:translate-x-0 ${
@@ -380,7 +482,7 @@ export default function MemberDashboard() {
               <img src="/images/AUREON9.png" alt="AUREON9 logo" className="h-11 w-11 object-contain" />
               <div>
                 <h1 className="text-lg font-semibold">AUREON9</h1>
-                <p className="text-xs text-slate-500">Global membership and rewards</p>
+                <p className="text-xs text-slate-500">Member control center</p>
               </div>
             </div>
             <button
@@ -417,7 +519,7 @@ export default function MemberDashboard() {
           </div>
 
           <nav className="space-y-1 pr-2">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeNav === item.id;
               return (
@@ -439,19 +541,18 @@ export default function MemberDashboard() {
           <Separator className="my-5" />
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm">
-            <div className="flex items-start gap-3">
-              <ShieldCheck className="mt-0.5 h-4 w-4 text-slate-700" />
-              <div>
-                <p className="font-medium text-slate-900">Governance Status</p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  {memberData?.status || 'ACTIVE'} profile, {formatEnum(memberData?.verificationLevel || 'UNVERIFIED')} verification, referral code {referralCode}.
-                </p>
-              </div>
-            </div>
+            <p className="font-medium text-slate-900">Pending Actions</p>
+            <p className="mt-1 text-xs leading-5 text-slate-500">
+              {pendingActions.length
+                ? `${pendingActions.length} upgrade/compliance actions need attention.`
+                : 'No pending actions. Your profile is current.'}
+            </p>
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              Class: {formatEnum(capabilities?.profile?.participantClassCode || memberData?.participantClass?.code || 'GENERAL_MEMBER')}
+            </p>
           </div>
 
-          {/* Bottom Action Buttons */}
-          <div className="mt-6 border-t border-slate-200 pt-4 space-y-2">
+          <div className="mt-6 border-t border-slate-200 pt-4">
             <Button
               onClick={handleLogout}
               variant="outline"
@@ -476,18 +577,15 @@ export default function MemberDashboard() {
                   <Menu className="h-5 w-5" />
                 </button>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">ODIECLOUD Membership And Rewards Infrastructure</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">ODIECLOUD Membership Operations</p>
                   <h2 className="text-2xl font-semibold tracking-tight">{pageTitle}</h2>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="relative w-full lg:w-80">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Input className="rounded-2xl border-slate-200 pl-9" placeholder="Search your documents, cases, and opportunities..." />
+                  <Input className="rounded-2xl border-slate-200 pl-9" placeholder="Search panel data..." />
                 </div>
-                <Button variant="outline" className="rounded-2xl border-slate-200">
-                  <Bell className="mr-2 h-4 w-4" /> Alerts
-                </Button>
               </div>
             </div>
           </header>
@@ -495,43 +593,47 @@ export default function MemberDashboard() {
           <div className="space-y-6 p-5 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:p-6">
             {error && <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
             {notice && <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div>}
-
-            <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {stats.map((stat) => (
-                <StatCard key={stat.label} {...stat} />
-              ))}
-            </section>
-
             {loading ? (
               <Card className="rounded-2xl border-slate-200 shadow-sm">
                 <CardContent className="p-6 text-sm text-slate-500">Loading member workspace...</CardContent>
               </Card>
             ) : (
-              renderSection({
-                activeNav,
-                auth,
-                documents,
-                documentForm,
-                memberData,
-                opportunities,
-                referralCode,
-                referralData,
-                referralForm,
-                saving,
-                setDocumentForm,
-                setReferralForm,
-                setSettingsForm,
-                setVerificationForm,
-                settingsForm,
-                verificationData,
-                verificationForm,
-                verificationProgress,
-                walletData,
-                handleDocumentUpload,
-                handleReferralCreate,
-                handleSettingsSave,
-                handleVerificationRequest,
-              })
+              <PanelSection
+                activeNav={activeNav}
+                memberData={memberData}
+                walletData={walletData}
+                verificationData={verificationData}
+                referralData={referralData}
+                opportunities={opportunities}
+                marketplaceItems={marketplaceItems}
+                documents={documents}
+                notifications={notifications}
+                performance={performance}
+                upgradePath={upgradePath}
+                capabilities={capabilities}
+                stats={stats}
+                earningsData={earningsData}
+                verificationForm={verificationForm}
+                setVerificationForm={setVerificationForm}
+                referralForm={referralForm}
+                setReferralForm={setReferralForm}
+                documentForm={documentForm}
+                setDocumentForm={setDocumentForm}
+                settingsForm={settingsForm}
+                setSettingsForm={setSettingsForm}
+                preferenceState={preferenceState}
+                setPreferenceState={setPreferenceState}
+                saving={saving}
+                handleVerificationRequest={handleVerificationRequest}
+                handleReferralCreate={handleReferralCreate}
+                handleDocumentUpload={handleDocumentUpload}
+                handleSettingsSave={handleSettingsSave}
+                handlePreferenceSave={handlePreferenceSave}
+                copyReferralLink={copyReferralLink}
+                referralCode={referralCode}
+                verificationProgress={verificationProgress}
+                nextTierName={nextTierName}
+              />
             )}
           </div>
         </main>
@@ -540,38 +642,78 @@ export default function MemberDashboard() {
   );
 }
 
-function renderSection(props) {
-  const {
-    activeNav,
-    documents,
-    documentForm,
-    memberData,
-    opportunities,
-    referralCode,
-    referralData,
-    referralForm,
-    saving,
-    setDocumentForm,
-    setReferralForm,
-    setSettingsForm,
-    setVerificationForm,
-    settingsForm,
-    verificationData,
-    verificationForm,
-    verificationProgress,
-    walletData,
-    handleDocumentUpload,
-    handleReferralCreate,
-    handleSettingsSave,
-    handleVerificationRequest,
-  } = props;
+function PanelSection({
+  activeNav,
+  memberData,
+  walletData,
+  verificationData,
+  referralData,
+  opportunities,
+  marketplaceItems,
+  documents,
+  notifications,
+  performance,
+  upgradePath,
+  capabilities,
+  stats,
+  earningsData,
+  verificationForm,
+  setVerificationForm,
+  referralForm,
+  setReferralForm,
+  documentForm,
+  setDocumentForm,
+  settingsForm,
+  setSettingsForm,
+  preferenceState,
+  setPreferenceState,
+  saving,
+  handleVerificationRequest,
+  handleReferralCreate,
+  handleDocumentUpload,
+  handleSettingsSave,
+  handlePreferenceSave,
+  copyReferralLink,
+  referralCode,
+  verificationProgress,
+  nextTierName,
+}) {
+  if (capabilities?.screens?.[activeNav] === false) {
+    return (
+      <Card className="rounded-2xl border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle>Screen Not Available</CardTitle>
+          <CardDescription>This screen is not enabled for your current member class, tier, and verification level.</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  if (activeNav === 'profile') {
+    return (
+      <Card className="rounded-2xl border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle>Profile & Identity</CardTitle>
+          <CardDescription>Primary identity, contact, and organizational profile records.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <Info title="Display Name" value={memberData?.displayName || 'Not set'} />
+          <Info title="Email" value={memberData?.user?.email || 'N/A'} />
+          <Info title="Phone" value={memberData?.phone || 'Not set'} />
+          <Info title="Country" value={memberData?.country || 'Not set'} />
+          <Info title="Business Name" value={memberData?.businessName || 'Not set'} />
+          <Info title="Participant Class" value={formatEnum(memberData?.participantClass?.code || 'GENERAL_MEMBER')} />
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (activeNav === 'verification') {
     return (
       <Card className="rounded-2xl border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle>Verification Center</CardTitle>
-          <CardDescription>Submit verification upgrades and track governance review outcomes.</CardDescription>
+          <CardDescription>Level progression, case submissions, and review outcomes.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="space-y-3">
@@ -588,37 +730,30 @@ function renderSection(props) {
               );
             })}
           </div>
-
           <div className="space-y-4">
             <Card className="rounded-2xl border-slate-200">
               <CardContent className="grid gap-4 p-5">
-                <div>
-                  <h3 className="font-semibold">Request a new verification level</h3>
-                  <p className="mt-1 text-sm text-slate-500">Current status: {formatEnum(memberData?.verificationLevel || 'UNVERIFIED')}</p>
-                </div>
+                <h3 className="font-semibold">Submit Verification Upgrade</h3>
                 <select
                   value={verificationForm.requestedLevel}
                   onChange={(event) => setVerificationForm((current) => ({ ...current, requestedLevel: event.target.value }))}
                   className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900"
                 >
                   {verificationLevels.map((level) => (
-                    <option key={level} value={level}>
-                      {formatEnum(level)}
-                    </option>
+                    <option key={level} value={level}>{formatEnum(level)}</option>
                   ))}
                 </select>
                 <Textarea
                   className="min-h-[120px] rounded-2xl border-slate-200"
-                  placeholder="Add supporting notes for the review team..."
+                  placeholder="Supporting notes for reviewers..."
                   value={verificationForm.notes}
                   onChange={(event) => setVerificationForm((current) => ({ ...current, notes: event.target.value }))}
                 />
-                <Button onClick={handleVerificationRequest} disabled={saving}>
-                  Submit Verification Request
+                <Button onClick={handleVerificationRequest} disabled={saving || !capabilities?.actions?.canRequestUpgrade}>
+                  {capabilities?.actions?.canRequestUpgrade ? 'Submit Request' : 'Verification Upgrade Locked'}
                 </Button>
               </CardContent>
             </Card>
-
             <Card className="rounded-2xl border-slate-200">
               <CardContent className="p-5">
                 <h3 className="font-semibold">Submitted Cases</h3>
@@ -626,7 +761,7 @@ function renderSection(props) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Level</TableHead>
+                        <TableHead>Requested Level</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Queue</TableHead>
                         <TableHead>Submitted</TableHead>
@@ -652,6 +787,26 @@ function renderSection(props) {
                 </div>
               </CardContent>
             </Card>
+
+            <Card className="rounded-2xl border-slate-200">
+              <CardContent className="p-5">
+                <h3 className="font-semibold">Reviewer Messages</h3>
+                <div className="mt-3 space-y-3">
+                  {verificationData.filter((item) => item.notes).slice(0, 6).map((record) => (
+                    <div key={record.id} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-medium">{formatEnum(record.queueStatus || record.status)}</span>
+                        <span className="text-xs text-slate-500">{formatDate(record.submittedAt)}</span>
+                      </div>
+                      <p className="mt-2 text-slate-600">{record.notes}</p>
+                    </div>
+                  ))}
+                  {!verificationData.some((item) => item.notes) && (
+                    <p className="text-sm text-slate-500">No reviewer messages yet.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </CardContent>
       </Card>
@@ -662,32 +817,33 @@ function renderSection(props) {
     return (
       <Card className="rounded-2xl border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle>Membership Tier And Identity</CardTitle>
-          <CardDescription>Member class, tier standing, and progression indicators.</CardDescription>
+          <CardTitle>Membership Tier Screen</CardTitle>
+          <CardDescription>Tier badge, progression, and upgrade readiness checklist.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <Card className="rounded-2xl border-slate-200"><CardContent className="p-5"><p className="text-sm text-slate-500">Display Name</p><p className="mt-2 text-xl font-semibold">{memberData?.displayName || 'Not set'}</p></CardContent></Card>
-            <Card className="rounded-2xl border-slate-200"><CardContent className="p-5"><p className="text-sm text-slate-500">Participant Class</p><p className="mt-2 text-xl font-semibold">{formatEnum(memberData?.participantClass?.code || 'GENERAL_MEMBER')}</p></CardContent></Card>
-            <Card className="rounded-2xl border-slate-200"><CardContent className="p-5"><p className="text-sm text-slate-500">Membership Tier</p><p className="mt-2 text-xl font-semibold">{memberData?.tier?.name || 'Member'}</p></CardContent></Card>
-            <Card className="rounded-2xl border-slate-200"><CardContent className="p-5"><p className="text-sm text-slate-500">Referral Code</p><p className="mt-2 text-xl font-semibold">{referralCode}</p></CardContent></Card>
+            <Info title="Current Tier" value={memberData?.tier?.name || 'Member'} />
+            <Info title="Next Tier" value={nextTierName} />
+            <Info title="Verification Level" value={formatEnum(memberData?.verificationLevel || 'UNVERIFIED')} />
+            <Info title="Member Status" value={formatEnum(memberData?.status || 'ACTIVE')} />
           </div>
-
           <div className="rounded-2xl border border-slate-200 p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-semibold">Membership Readiness</h3>
-              <span className="text-sm text-slate-500">{Math.round(verificationProgress)}%</span>
+              <h3 className="font-semibold">Upgrade Progress</h3>
+              <span className="text-sm text-slate-500">{upgradePath?.progress || 0}%</span>
             </div>
-            <Progress value={verificationProgress} className="h-2" />
+            <Progress value={upgradePath?.progress || 0} className="h-2" />
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {[
-                `Verification level: ${formatEnum(memberData?.verificationLevel || 'UNVERIFIED')}`,
-                `Status: ${formatEnum(memberData?.status || 'ACTIVE')}`,
-                `Country: ${memberData?.country || 'Not provided'}`,
-                `Business: ${memberData?.businessName || 'Not provided'}`,
-              ].map((item) => (
-                <div key={item} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">{item}</div>
+              {(upgradePath?.checklist || []).map((item) => (
+                <div key={item.key} className={`rounded-2xl px-4 py-3 text-sm ${item.met ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'}`}>
+                  {item.label}
+                </div>
               ))}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button onClick={handleVerificationRequest} disabled={saving || !capabilities?.actions?.canRequestUpgrade}>
+                Request Upgrade
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -700,15 +856,32 @@ function renderSection(props) {
       <Card className="rounded-2xl border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle>AUREX Wallet</CardTitle>
-          <CardDescription>Live wallet balance and transaction history.</CardDescription>
+          <CardDescription>Wallet balance and transaction settlement history.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-3">
-            <Card className="rounded-2xl border-slate-200"><CardContent className="p-4"><p className="text-sm text-slate-500">Balance</p><p className="mt-2 text-2xl font-semibold">ARX {Number(walletData?.balance || 0).toLocaleString()}</p></CardContent></Card>
-            <Card className="rounded-2xl border-slate-200"><CardContent className="p-4"><p className="text-sm text-slate-500">Currency</p><p className="mt-2 text-2xl font-semibold">{walletData?.currencyCode || 'ARX'}</p></CardContent></Card>
-            <Card className="rounded-2xl border-slate-200"><CardContent className="p-4"><p className="text-sm text-slate-500">Transactions</p><p className="mt-2 text-2xl font-semibold">{walletData?.transactions?.length || 0}</p></CardContent></Card>
+            <Info title="Balance" value={`ARX ${Number(walletData?.balance || 0).toLocaleString()}`} />
+            <Info title="Currency" value={walletData?.currencyCode || 'ARX'} />
+            <Info title="Transactions" value={String(walletData?.transactions?.length || 0)} />
           </div>
-
+          <div className="grid gap-4 md:grid-cols-2">
+            <Button variant="outline" className="rounded-2xl border-slate-200" disabled={!capabilities?.actions?.canWithdraw}>
+              Withdraw to External Wallet
+            </Button>
+            <Button variant="outline" className="rounded-2xl border-slate-200" disabled={!capabilities?.actions?.canTransfer}>
+              Transfer to Member
+            </Button>
+          </div>
+          <div className="rounded-2xl border border-slate-200 p-5">
+            <h3 className="font-semibold">Rewards Breakdown</h3>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              {(earningsData?.bySource || []).map((item) => (
+                <div key={item.source} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">
+                  {formatEnum(item.source)}: ARX {Number(item.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </div>
+              ))}
+            </div>
+          </div>
           <div className="rounded-2xl border border-slate-200">
             <Table>
               <TableHeader>
@@ -731,7 +904,7 @@ function renderSection(props) {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-sm text-slate-500">No wallet transactions recorded yet.</TableCell>
+                    <TableCell colSpan={4} className="text-sm text-slate-500">No wallet transactions recorded.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -742,51 +915,119 @@ function renderSection(props) {
     );
   }
 
+  if (activeNav === 'earnings') {
+    return (
+      <Card className="rounded-2xl border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle>Earnings Dashboard</CardTitle>
+          <CardDescription>Earnings totals by source including referrals, commissions, rewards, and settlements.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <Info title="Total Earned" value={`ARX ${Number(earningsData?.total || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} />
+            <Info title="Reward Credits" value={`ARX ${sumSource(earningsData, 'REWARD_CREDIT')}`} />
+            <Info title="Commissions" value={`ARX ${sumSource(earningsData, 'COMMISSION_CREDIT')}`} />
+            <Info title="Referral Bonus" value={`ARX ${sumSource(earningsData, 'REFERRAL_BONUS')}`} />
+          </div>
+          <div className="rounded-2xl border border-slate-200">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(earningsData?.bySource || []).map((item) => (
+                  <TableRow key={item.source}>
+                    <TableCell>{formatEnum(item.source)}</TableCell>
+                    <TableCell>ARX {Number(item.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (activeNav === 'marketplace') {
+    return (
+      <Card className="rounded-2xl border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle>Marketplace (ODIEXA)</CardTitle>
+          <CardDescription>Verified marketplace listings available at your current access level.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {(marketplaceItems.length ? marketplaceItems : opportunities).length ? (
+            (marketplaceItems.length ? marketplaceItems : opportunities).map((item) => (
+              <Card key={item.id} className="rounded-2xl border-slate-200">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold">{item.title}</p>
+                    <StatusBadge value={item.accessRule} />
+                  </div>
+                  <p className="mt-3 text-sm text-slate-500">{item.description || 'No description provided.'}</p>
+                  <div className="mt-4 text-sm text-slate-600">
+                    <div>Type: {formatEnum(item.type)}</div>
+                    <div>Country: {item.country || 'Global'}</div>
+                  </div>
+                  <Button className="mt-4 w-full rounded-2xl" disabled={!capabilities?.actions?.canBuyInvest}>
+                    Buy / Invest
+                  </Button>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">
+              No marketplace listings currently available.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (activeNav === 'referrals') {
     return (
       <Card className="rounded-2xl border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle>AAL Referral System</CardTitle>
-          <CardDescription>Create referrals and monitor conversion records linked to your member profile.</CardDescription>
+          <CardTitle>Referral System (AAL)</CardTitle>
+          <CardDescription>Create referrals, copy your referral link, and track conversion records.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="rounded-2xl border border-slate-200 p-5">
-            <p className="text-sm text-slate-500">Your referral code</p>
+            <p className="text-sm text-slate-500">Referral code</p>
             <p className="mt-2 text-2xl font-semibold">{referralCode}</p>
+            <Button variant="outline" className="mt-3 rounded-2xl border-slate-200" onClick={copyReferralLink}>Copy Referral Link</Button>
           </div>
-
-          <div className="grid gap-4 md:grid-cols-[1fr_0.7fr]">
+          <div className="grid gap-4 md:grid-cols-[1fr_0.8fr]">
             <Card className="rounded-2xl border-slate-200">
-              <CardContent className="p-5">
+              <CardContent className="p-5 grid gap-3">
                 <h3 className="font-semibold">Create Referral</h3>
-                <div className="mt-4 grid gap-3">
-                  <Input
-                    placeholder="Receiver email"
-                    value={referralForm.receiverEmail}
-                    onChange={(event) => setReferralForm((current) => ({ ...current, receiverEmail: event.target.value }))}
-                  />
-                  <Input
-                    placeholder="Campaign code (optional)"
-                    value={referralForm.campaignCode}
-                    onChange={(event) => setReferralForm((current) => ({ ...current, campaignCode: event.target.value }))}
-                  />
-                  <Button onClick={handleReferralCreate} disabled={saving}>Create Referral</Button>
-                </div>
+                <Input
+                  placeholder="Receiver email"
+                  value={referralForm.receiverEmail}
+                  onChange={(event) => setReferralForm((current) => ({ ...current, receiverEmail: event.target.value }))}
+                />
+                <Input
+                  placeholder="Campaign code (optional)"
+                  value={referralForm.campaignCode}
+                  onChange={(event) => setReferralForm((current) => ({ ...current, campaignCode: event.target.value }))}
+                />
+                <Button onClick={handleReferralCreate} disabled={saving}>Create Referral</Button>
               </CardContent>
             </Card>
-
             <Card className="rounded-2xl border-slate-200">
-              <CardContent className="p-5">
+              <CardContent className="p-5 space-y-3">
                 <h3 className="font-semibold">Referral Metrics</h3>
-                <div className="mt-4 space-y-3">
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Total referrals: {referralData.length}</div>
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Pending referrals: {referralData.filter((item) => item.status === 'PENDING').length}</div>
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Accepted referrals: {referralData.filter((item) => item.status === 'ACCEPTED').length}</div>
-                </div>
+                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Total: {referralData.length}</div>
+                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Pending: {referralData.filter((item) => item.status === 'PENDING').length}</div>
+                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Accepted: {referralData.filter((item) => item.status === 'ACCEPTED').length}</div>
               </CardContent>
             </Card>
           </div>
-
           <div className="rounded-2xl border border-slate-200">
             <Table>
               <TableHeader>
@@ -809,7 +1050,7 @@ function renderSection(props) {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-sm text-slate-500">No referrals created yet.</TableCell>
+                    <TableCell colSpan={4} className="text-sm text-slate-500">No referral records found.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -825,28 +1066,31 @@ function renderSection(props) {
       <Card className="rounded-2xl border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle>Opportunities Feed</CardTitle>
-          <CardDescription>Published opportunities visible to your current tier and verification state.</CardDescription>
+          <CardDescription>Investment, trade, partnership, and related opportunities currently published.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {opportunities.length ? (
-            opportunities.map((opportunity) => (
-              <Card key={opportunity.id} className="rounded-2xl border-slate-200">
+            opportunities.map((item) => (
+              <Card key={item.id} className="rounded-2xl border-slate-200">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between">
-                    <p className="font-semibold">{opportunity.title}</p>
-                    <StatusBadge value={opportunity.accessRule} />
+                    <p className="font-semibold">{item.title}</p>
+                    <StatusBadge value={item.accessRule} />
                   </div>
-                  <p className="mt-3 text-sm text-slate-500">{opportunity.description || 'No description provided.'}</p>
-                  <div className="mt-4 grid gap-2 text-sm text-slate-600">
-                    <div>Type: {formatEnum(opportunity.type)}</div>
-                    <div>Country: {opportunity.country || 'Global'}</div>
+                  <p className="mt-3 text-sm text-slate-500">{item.description || 'No description.'}</p>
+                  <div className="mt-4 text-sm text-slate-600">
+                    <div>Type: {formatEnum(item.type)}</div>
+                    <div>Country: {item.country || 'Global'}</div>
                   </div>
+                  <Button className="mt-4 w-full rounded-2xl" disabled={!capabilities?.actions?.canApplyOpportunity}>
+                    Apply
+                  </Button>
                 </CardContent>
               </Card>
             ))
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">
-              No opportunities are currently published for your access level.
+              No opportunities are published for your access level.
             </div>
           )}
         </CardContent>
@@ -858,11 +1102,11 @@ function renderSection(props) {
     return (
       <Card className="rounded-2xl border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle>Documents And Compliance</CardTitle>
-          <CardDescription>Upload verification documents and monitor review state.</CardDescription>
+          <CardTitle>Documents & Compliance</CardTitle>
+          <CardDescription>Upload compliance records and monitor document review status.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
             <Card className="rounded-2xl border-slate-200">
               <CardContent className="grid gap-3 p-5">
                 <h3 className="font-semibold">Upload New Document</h3>
@@ -884,26 +1128,22 @@ function renderSection(props) {
                 <Button onClick={handleDocumentUpload} disabled={saving}>Upload Document</Button>
               </CardContent>
             </Card>
-
             <Card className="rounded-2xl border-slate-200">
-              <CardContent className="p-5">
-                <h3 className="font-semibold">Document Summary</h3>
-                <div className="mt-4 space-y-3">
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Documents uploaded: {documents.length}</div>
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Accepted documents: {documents.filter((item) => item.reviewStatus === 'ACCEPTED').length}</div>
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Pending review: {documents.filter((item) => item.reviewStatus === 'RECEIVED' || item.reviewStatus === 'UNDER_REVIEW').length}</div>
-                </div>
+              <CardContent className="p-5 space-y-3">
+                <h3 className="font-semibold">Compliance Summary</h3>
+                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Documents uploaded: {documents.length}</div>
+                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Accepted: {documents.filter((item) => item.reviewStatus === 'ACCEPTED').length}</div>
+                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Pending review: {documents.filter((item) => ['RECEIVED', 'UNDER_REVIEW'].includes(item.reviewStatus)).length}</div>
               </CardContent>
             </Card>
           </div>
-
           <div className="rounded-2xl border border-slate-200">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Document Type</TableHead>
                   <TableHead>Purpose</TableHead>
-                  <TableHead>Review</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Uploaded</TableHead>
                 </TableRow>
               </TableHeader>
@@ -919,11 +1159,102 @@ function renderSection(props) {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-sm text-slate-500">No documents uploaded yet.</TableCell>
+                    <TableCell colSpan={4} className="text-sm text-slate-500">No documents uploaded.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (activeNav === 'notifications') {
+    return (
+      <Card className="rounded-2xl border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle>Notifications & Alerts</CardTitle>
+          <CardDescription>Recent verification, document, wallet, and referral events.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {notifications.length ? (
+            notifications.map((item) => (
+              <div key={item.id} className="rounded-2xl border border-slate-200 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{item.title}</p>
+                    <p className="text-sm text-slate-500">{item.message}</p>
+                  </div>
+                  <StatusBadge value={item.status} />
+                </div>
+                <p className="mt-2 text-xs text-slate-500">{formatDate(item.createdAt)}</p>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">
+              No notifications yet.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (activeNav === 'metrics') {
+    return (
+      <Card className="rounded-2xl border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle>Performance Metrics</CardTitle>
+          <CardDescription>Engagement, activity, and compliance scoring based on your real account data.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            <MetricBar title="Engagement Score" value={performance?.engagementScore || 0} />
+            <MetricBar title="Activity Score" value={performance?.activityScore || 0} />
+            <MetricBar title="Compliance Score" value={performance?.complianceScore || 0} />
+          </div>
+          <div className="rounded-2xl border border-slate-200 p-5">
+            <h3 className="font-semibold">Data Points</h3>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Verification cases: {performance?.caseCount || 0}</div>
+              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Documents: {performance?.documentCount || 0}</div>
+              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Referrals: {performance?.referralCount || 0}</div>
+              <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm">Transactions: {performance?.transactionCount || 0}</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (activeNav === 'upgrade') {
+    return (
+      <Card className="rounded-2xl border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle>Upgrade Path Tracker</CardTitle>
+          <CardDescription>Checklist, current progress, and estimated timeline to next tier.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Info title="Current Tier" value={formatEnum(upgradePath?.currentTier || memberData?.tier?.code || 'MEMBER')} />
+            <Info title="Next Tier" value={formatEnum(upgradePath?.nextTier || 'SOVEREIGN')} />
+            <Info title="Estimated Timeline" value={`${upgradePath?.estimatedTimelineDays || 0} days`} />
+          </div>
+          <div className="rounded-2xl border border-slate-200 p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-semibold">Upgrade Progress</h3>
+              <span className="text-sm text-slate-500">{upgradePath?.progress || 0}%</span>
+            </div>
+            <Progress value={upgradePath?.progress || 0} className="h-2" />
+            <div className="mt-4 space-y-3">
+              {(upgradePath?.checklist || []).map((item) => (
+                <div key={item.key} className={`flex items-start gap-3 rounded-2xl px-4 py-3 text-sm ${item.met ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'}`}>
+                  {item.met ? <CheckCircle2 className="mt-0.5 h-4 w-4" /> : <AlertTriangle className="mt-0.5 h-4 w-4" />}
+                  <span>{item.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -935,9 +1266,9 @@ function renderSection(props) {
       <Card className="rounded-2xl border-slate-200 shadow-sm">
         <CardHeader>
           <CardTitle>Settings</CardTitle>
-          <CardDescription>Update your member profile and business identity details.</CardDescription>
+          <CardDescription>Profile, notification, security, connected accounts, and account lifecycle controls.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
+        <CardContent className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
           <div className="grid gap-3">
             <Input
               placeholder="Display name"
@@ -960,8 +1291,37 @@ function renderSection(props) {
               onChange={(event) => setSettingsForm((current) => ({ ...current, businessName: event.target.value }))}
             />
             <Button onClick={handleSettingsSave} disabled={saving}>Save Profile</Button>
-          </div>
 
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="font-semibold">Notification Preferences</p>
+              <label className="mt-3 flex items-center justify-between text-sm">
+                <span>Email notifications</span>
+                <input
+                  type="checkbox"
+                  checked={preferenceState.emailNotifications}
+                  onChange={(event) => setPreferenceState((current) => ({ ...current, emailNotifications: event.target.checked }))}
+                />
+              </label>
+              <Button variant="outline" className="mt-3 rounded-2xl border-slate-200" onClick={handlePreferenceSave} disabled={saving}>
+                Save Preferences
+              </Button>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="font-semibold">Security</p>
+              <label className="mt-3 flex items-center justify-between text-sm">
+                <span>Two-factor authentication</span>
+                <input
+                  type="checkbox"
+                  checked={preferenceState.twoFactorEnabled}
+                  onChange={(event) => setPreferenceState((current) => ({ ...current, twoFactorEnabled: event.target.checked }))}
+                />
+              </label>
+              <Button variant="outline" className="mt-3 rounded-2xl border-slate-200" disabled={!capabilities?.actions?.canChangePassword}>
+                Change Password
+              </Button>
+            </div>
+          </div>
           <div className="space-y-3">
             {[
               `Tier: ${memberData?.tier?.name || 'Member'}`,
@@ -973,6 +1333,30 @@ function renderSection(props) {
                 <span>{item}</span>
               </div>
             ))}
+
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="font-semibold">Connected Accounts</p>
+              <label className="mt-3 flex items-center justify-between text-sm">
+                <span>Google</span>
+                <input
+                  type="checkbox"
+                  checked={preferenceState.linkedGoogle}
+                  onChange={(event) => setPreferenceState((current) => ({ ...current, linkedGoogle: event.target.checked }))}
+                />
+              </label>
+              <label className="mt-3 flex items-center justify-between text-sm">
+                <span>LinkedIn</span>
+                <input
+                  type="checkbox"
+                  checked={preferenceState.linkedLinkedIn}
+                  onChange={(event) => setPreferenceState((current) => ({ ...current, linkedLinkedIn: event.target.checked }))}
+                />
+              </label>
+            </div>
+
+            <Button variant="outline" className="w-full rounded-2xl border-red-200 text-red-600 hover:bg-red-50">
+              Delete Account
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -983,45 +1367,20 @@ function renderSection(props) {
     <Card className="rounded-2xl border-slate-200 shadow-sm">
       <CardHeader>
         <CardTitle>Dashboard Overview</CardTitle>
-        <CardDescription>Live member data across identity, verification, referrals, wallet, and compliance.</CardDescription>
+        <CardDescription>Main dashboard with balance, tier status, referrals, earnings, pending actions, transactions, and opportunities.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="rounded-2xl border-slate-200">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-emerald-50 p-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /></div>
-                <div>
-                  <p className="text-sm font-medium">Membership Active</p>
-                  <p className="text-xs text-slate-500">{formatEnum(memberData?.status || 'ACTIVE')} profile state</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl border-slate-200">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-blue-50 p-2"><ShieldCheck className="h-4 w-4 text-blue-600" /></div>
-                <div>
-                  <p className="text-sm font-medium">Verification</p>
-                  <p className="text-xs text-slate-500">{verificationData.length} total review cases</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl border-slate-200">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl bg-amber-50 p-2"><FileCheck className="h-4 w-4 text-amber-600" /></div>
-                <div>
-                  <p className="text-sm font-medium">Documents</p>
-                  <p className="text-xs text-slate-500">{documents.length} uploaded compliance files</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {(stats || []).map((stat) => (
+            <StatCard key={stat.label} {...stat} />
+          ))}
+        </section>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Info title="Current Tier" value={memberData?.tier?.name || 'Member'} />
+          <Info title="Verification Level" value={formatEnum(memberData?.verificationLevel || 'UNVERIFIED')} />
+          <Info title="Referral Count" value={String(referralData.length || 0)} />
+          <Info title="Total Earnings" value={`ARX ${Number(earningsData?.total || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} />
         </div>
-
         <div className="rounded-2xl border border-slate-200 p-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="font-semibold">Verification Readiness</h3>
@@ -1029,34 +1388,108 @@ function renderSection(props) {
           </div>
           <Progress value={verificationProgress} className="h-2" />
         </div>
-
-        <div className="rounded-2xl border border-slate-200">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Recent Case</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Notes</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {verificationData.length ? (
-                verificationData.slice(0, 5).map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell>{formatEnum(record.requestedLevel)}</TableCell>
-                    <TableCell><StatusBadge value={record.queueStatus || record.status} /></TableCell>
-                    <TableCell>{record.notes || 'No notes recorded.'}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
+        <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+          <div className="rounded-2xl border border-slate-200">
+            <div className="border-b border-slate-200 px-4 py-3 text-sm font-semibold">Pending Actions</div>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={3} className="text-sm text-slate-500">No recent verification activity yet.</TableCell>
+                  <TableHead>Pending Item</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {upgradePath?.checklist?.length ? (
+                  upgradePath.checklist.map((item) => (
+                    <TableRow key={item.key}>
+                      <TableCell>{item.label}</TableCell>
+                      <TableCell><StatusBadge value={item.met ? 'APPROVED' : 'PENDING'} /></TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-sm text-slate-500">No upgrade checklist available.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200">
+            <div className="border-b border-slate-200 px-4 py-3 text-sm font-semibold">Latest Transactions</div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {walletData?.transactions?.length ? (
+                  walletData.transactions.slice(0, 6).map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell>{formatDate(transaction.createdAt)}</TableCell>
+                      <TableCell>{formatEnum(transaction.type)}</TableCell>
+                      <TableCell>ARX {Number(transaction.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-sm text-slate-500">No transactions yet.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 p-5">
+          <h3 className="font-semibold">Opportunities Feed</h3>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {opportunities.slice(0, 6).map((item) => (
+              <div key={item.id} className="rounded-2xl bg-slate-50 p-3">
+                <p className="font-medium">{item.title}</p>
+                <p className="mt-1 text-xs text-slate-500">{formatEnum(item.type)} • {item.country || 'Global'}</p>
+                <p className="mt-2 text-xs text-slate-600">{item.description || 'No summary available.'}</p>
+              </div>
+            ))}
+            {!opportunities.length && (
+              <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-500">No opportunities available.</div>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
   );
+}
+
+function Info({ title, value }) {
+  return (
+    <Card className="rounded-2xl border-slate-200">
+      <CardContent className="p-5">
+        <p className="text-sm text-slate-500">{title}</p>
+        <p className="mt-2 text-xl font-semibold">{value}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MetricBar({ title, value }) {
+  return (
+    <Card className="rounded-2xl border-slate-200">
+      <CardContent className="p-5">
+        <div className="mb-3 flex items-center justify-between text-sm">
+          <span>{title}</span>
+          <span>{value}%</span>
+        </div>
+        <Progress value={value} className="h-2" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function sumSource(earningsData, source) {
+  const item = (earningsData?.bySource || []).find((entry) => entry.source === source);
+  return Number(item?.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
