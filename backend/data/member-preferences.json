@@ -1,1 +1,8 @@
-{}
+{
+  "cmols718w00031jp58z9plypi": {
+    "emailNotifications": true,
+    "twoFactorEnabled": false,
+    "linkedGoogle": false,
+    "linkedLinkedIn": false
+  }
+}

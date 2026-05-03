@@ -94,6 +94,14 @@ export const opportunitiesAPI = {
   update: (id, data) => apiClient.patch(`/api/opportunities/${id}`, data),
 };
 
+// Opportunity Applications API
+export const opportunityApplicationsAPI = {
+  getAll: () => apiClient.get('/api/opportunity-applications'),
+  getByMemberId: (memberId) => apiClient.get(`/api/members/${memberId}/opportunity-applications`),
+  create: (data) => apiClient.post('/api/opportunity-applications', data),
+  update: (id, data) => apiClient.put(`/api/opportunity-applications/${id}`, data),
+};
+
 // Reference Data API
 export const referenceAPI = {
   getParticipantClasses: () => apiClient.get('/api/participant-classes'),

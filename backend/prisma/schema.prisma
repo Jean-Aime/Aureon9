@@ -192,6 +192,7 @@ model MemberProfile {
   documents            MemberDocument[]
   referralsSent        Referral[]           @relation("ReferralSender")
   referralsReceived    Referral[]           @relation("ReferralReceiver")
+  opportunityApplications OpportunityApplication[]
 
   @@map("member_profiles")
 }
@@ -283,18 +284,53 @@ model Referral {
   @@map("referrals")
 }
 
+model Organization {
+  id                    String               @id @default(cuid())
+  name                  String
+  description           String?
+  country               String?
+  businessType          String?
+  website               String?
+  contactEmail          String?
+  contactPhone          String?
+  isActive              Boolean              @default(true)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  opportunities         Opportunity[]
+
+  @@map("organizations")
+}
+
 model Opportunity {
   id                    String               @id @default(cuid())
   title                 String
   description           String?
   type                  OpportunityType
   accessRule            OpportunityAccessRule
+  organizationId        String?
   isPublished           Boolean              @default(false)
   country               String?
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
+  organization          Organization?        @relation(fields: [organizationId], references: [id])
+  applications          OpportunityApplication[]
 
   @@map("opportunities")
+}
+
+model OpportunityApplication {
+  id                    String               @id @default(cuid())
+  memberProfileId       String
+  opportunityId         String
+  status                String               @default("SUBMITTED")
+  notes                 String?
+  submittedAt           DateTime             @default(now())
+  reviewedAt            DateTime?
+  reviewedByUserId      String?
+  memberProfile         MemberProfile        @relation(fields: [memberProfileId], references: [id])
+  opportunity           Opportunity          @relation(fields: [opportunityId], references: [id])
+
+  @@map("opportunity_applications")
 }
 
 model AuditLog {

@@ -31,10 +31,12 @@ import { Textarea } from '../components/ui/Textarea';
 import { Separator } from '../components/ui/Separator';
 import { Avatar, AvatarFallback } from '../components/ui/Avatar';
 import { useAuth } from '../hooks/useAuth';
+import { MyApplications } from './MyApplications';
 import {
   documentsAPI,
   membersAPI,
   opportunitiesAPI,
+  opportunityApplicationsAPI,
   referralsAPI,
   verificationAPI,
   walletsAPI,
@@ -51,6 +53,7 @@ const navItems = [
   { id: 'marketplace', label: 'Marketplace', icon: Store },
   { id: 'referrals', label: 'Referral System', icon: Users },
   { id: 'opportunities', label: 'Opportunities Feed', icon: Briefcase },
+  { id: 'applications', label: 'My Applications', icon: CheckCircle2 },
   { id: 'documents', label: 'Documents & Compliance', icon: FileCheck },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'metrics', label: 'Performance Metrics', icon: BarChart3 },
@@ -1062,6 +1065,21 @@ function PanelSection({
   }
 
   if (activeNav === 'opportunities') {
+    const [applyingTo, setApplyingTo] = useState(null);
+
+    async function handleApplyOpportunity(opportunityId) {
+      try {
+        setApplyingTo(opportunityId);
+        await opportunityApplicationsAPI.create({ opportunityId });
+        alert('Application submitted successfully!');
+        window.location.reload();
+      } catch (err) {
+        alert('Error: ' + (err.response?.data?.error || err.message));
+      } finally {
+        setApplyingTo(null);
+      }
+    }
+
     return (
       <Card className="rounded-2xl border-slate-200 shadow-sm">
         <CardHeader>
@@ -1082,8 +1100,12 @@ function PanelSection({
                     <div>Type: {formatEnum(item.type)}</div>
                     <div>Country: {item.country || 'Global'}</div>
                   </div>
-                  <Button className="mt-4 w-full rounded-2xl" disabled={!capabilities?.actions?.canApplyOpportunity}>
-                    Apply
+                  <Button
+                    className="mt-4 w-full rounded-2xl"
+                    disabled={!capabilities?.actions?.canApplyOpportunity || applyingTo === item.id}
+                    onClick={() => handleApplyOpportunity(item.id)}
+                  >
+                    {applyingTo === item.id ? 'Applying...' : 'Apply'}
                   </Button>
                 </CardContent>
               </Card>
@@ -1096,6 +1118,10 @@ function PanelSection({
         </CardContent>
       </Card>
     );
+  }
+
+  if (activeNav === 'applications') {
+    return <MyApplications />;
   }
 
   if (activeNav === 'documents') {

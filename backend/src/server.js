@@ -225,7 +225,23 @@ function buildEarningsSummary(transactions) {
   return { total, bySource };
 }
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173' }));
+// CORS configuration - accept multiple localhost ports for development
+const corsOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:3000',
+  'http://localhost:3001',
+];
+app.use(cors({ 
+  origin: (origin, callback) => {
+    if (!origin || corsOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed'));
+    }
+  }
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(optionalAuth);
@@ -1559,6 +1575,127 @@ app.patch('/api/opportunities/:id', requireAuth, requireBackoffice, async (req, 
 
     await writeAuditLog({ actorUserId: req.auth.id, entityType: 'Opportunity', entityId: opportunity.id, action: 'UPDATE_OPPORTUNITY', payloadJson: { isPublished } });
     return res.json(opportunity);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Opportunity Applications Endpoints
+app.get('/api/opportunity-applications', requireAuth, async (req, res) => {
+  try {
+    const memberProfileId = req.auth.memberProfileId;
+    if (!memberProfileId) {
+      return res.status(403).json({ error: 'Member profile required' });
+    }
+
+    const applications = await prisma.opportunityApplication.findMany({
+      where: { memberProfileId },
+      include: {
+        opportunity: {
+          include: { organization: true },
+        },
+      },
+      orderBy: { submittedAt: 'desc' },
+    });
+
+    return res.json(applications);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/opportunity-applications', requireAuth, async (req, res) => {
+  try {
+    const { opportunityId, notes } = req.body;
+    const memberProfileId = req.auth.memberProfileId;
+
+    if (!memberProfileId || !opportunityId) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Check if already applied
+    const existing = await prisma.opportunityApplication.findFirst({
+      where: { memberProfileId, opportunityId },
+    });
+
+    if (existing) {
+      return res.status(409).json({ error: 'Already applied to this opportunity' });
+    }
+
+    const application = await prisma.opportunityApplication.create({
+      data: {
+        memberProfileId,
+        opportunityId,
+        notes,
+        status: 'SUBMITTED',
+      },
+      include: {
+        opportunity: {
+          include: { organization: true },
+        },
+      },
+    });
+
+    await writeAuditLog({
+      actorUserId: req.auth.id,
+      entityType: 'OpportunityApplication',
+      entityId: application.id,
+      action: 'CREATE_APPLICATION',
+      payloadJson: { opportunityId, memberProfileId },
+    });
+
+    return res.status(201).json(application);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/members/:id/opportunity-applications', requireAuth, async (req, res) => {
+  try {
+    const applications = await prisma.opportunityApplication.findMany({
+      where: { memberProfileId: req.params.id },
+      include: {
+        opportunity: {
+          include: { organization: true },
+        },
+      },
+      orderBy: { submittedAt: 'desc' },
+    });
+
+    return res.json(applications);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/opportunity-applications/:id', requireAuth, requireBackoffice, async (req, res) => {
+  try {
+    const { status, notes } = req.body;
+
+    const application = await prisma.opportunityApplication.update({
+      where: { id: req.params.id },
+      data: {
+        status,
+        notes,
+        reviewedAt: new Date(),
+        reviewedByUserId: req.auth.id,
+      },
+      include: {
+        opportunity: {
+          include: { organization: true },
+        },
+      },
+    });
+
+    await writeAuditLog({
+      actorUserId: req.auth.id,
+      entityType: 'OpportunityApplication',
+      entityId: application.id,
+      action: `APPLICATION_${status}`,
+      payloadJson: { status, notes },
+    });
+
+    return res.json(application);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
