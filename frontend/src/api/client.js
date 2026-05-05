@@ -34,6 +34,11 @@ apiClient.interceptors.request.use((config) => {
 export const authAPI = {
   register: (data) => apiClient.post('/api/auth/register', data),
   login: (email, password) => apiClient.post('/api/auth/login', { email, password }),
+  requestPasswordReset: (data) => apiClient.post('/api/auth/forgot-password', data),
+  resetPassword: (data) => apiClient.post('/api/auth/reset-password', data),
+  verifyEmail: (data) => apiClient.post('/api/auth/verify-email', data),
+  resendVerificationEmail: (email) => apiClient.post('/api/auth/resend-verification', { email }),
+  logout: () => apiClient.post('/api/auth/logout'),
 };
 
 // Members API

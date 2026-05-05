@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { ScrollReveal } from '../../components/ScrollReveal';
 import {
   HiChevronRight,
   HiArrowRight,
@@ -17,6 +18,7 @@ import {
   HiOfficeBuilding,
   HiCash,
   HiBadgeCheck,
+  HiUsers,
 } from 'react-icons/hi';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -50,43 +52,127 @@ export default function HomePage() {
     <div className="space-y-20 pb-20">
 
       {/* ── HERO ── */}
-      <section className="grid gap-8 lg:grid-cols-2 lg:items-stretch">
+      <ScrollReveal>
+      <section className="relative min-h-[500px] overflow-hidden lg:h-[650px]">
+        {/* Background image extending to edges */}
+        <img
+          src="/images/dorian-labbe-y2vAEkdaAdA-unsplash.jpg"
+          alt="AUREON9 Platform"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        
+        {/* Dark overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/80 to-transparent" />
 
-        {/* Left */}
-        <div className="flex flex-col justify-center pt-0 lg:pt-4">
-          <Badge className="w-fit rounded-full border border-[rgba(10,37,64,0.12)] bg-white px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[var(--aureon-ink)]">
-            Enterprise Membership Platform
-          </Badge>
-          <h1 className="mt-5 font-heading text-3xl font-semibold tracking-tight text-[var(--aureon-ink)] sm:text-4xl lg:text-5xl">
-            AUREON9 — Membership, Identity &amp; Rewards Infrastructure
-          </h1>
-          <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
-            A governed platform for participant classification, identity verification, tier progression, AUREX rewards, and controlled opportunity access — powered by ODIEBOARD.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Button asChild className="rounded-full bg-[var(--aureon-ink)] px-10 py-4 text-lg hover:bg-[#14385f]">
-              <NavLink className="inline-flex items-center gap-2" to="/register">
-                Become a Member <HiArrowRight className="h-5 w-5" />
-              </NavLink>
-            </Button>
-            <Button asChild variant="outline" className="rounded-full border-slate-300 px-10 py-4 text-lg">
-              <NavLink to="/membership">Explore Membership</NavLink>
-            </Button>
+        {/* Content overlay */}
+        <div className="relative mx-auto flex h-full max-w-7xl items-center justify-between px-6 py-12 lg:px-8 lg:py-8">
+          {/* Left content */}
+          <div className="flex max-w-xl flex-col justify-center">
+            <Badge className="w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-white backdrop-blur-sm">
+              Enterprise Membership Platform
+            </Badge>
+            <h1 className="mt-6 font-heading text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              AUREON9 — Membership, Identity &amp; Rewards Infrastructure
+            </h1>
+            <p className="mt-6 text-lg leading-8 text-white/90">
+              A governed platform for participant classification, identity verification, tier progression, AUREX rewards, and controlled opportunity access — powered by ODIEBOARD.
+            </p>
+            <div className="mt-8 flex gap-3">
+              <Button asChild className="whitespace-nowrap rounded-full bg-amber-500 px-5 py-3 text-sm font-semibold text-white hover:bg-amber-600 sm:px-8">
+                <NavLink className="inline-flex items-center gap-2" to="/register">
+                  Become a Member <HiArrowRight className="h-5 w-5" />
+                </NavLink>
+              </Button>
+              <Button asChild className="whitespace-nowrap rounded-full border-2 border-white/30 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/20 sm:px-8">
+                <NavLink to="/membership">Explore Membership</NavLink>
+              </Button>
+            </div>
+          </div>
+
+          {/* Right info cards */}
+          <div className="hidden lg:flex lg:flex-col lg:gap-4">
+            {/* Top row - 2 cards */}
+            <div className="flex gap-4">
+              <Card className="w-64 rounded-2xl border-white/20 bg-white/10 shadow-xl backdrop-blur-md">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
+                      <HiUsers className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-white/60">Participant Classes</p>
+                      <p className="text-lg font-bold text-white">17 mandatory classes</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="w-64 rounded-2xl border-white/20 bg-white/10 shadow-xl backdrop-blur-md">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
+                      <HiBadgeCheck className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-white/60">Verification Levels</p>
+                      <p className="text-lg font-bold text-white">7 trust states</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Middle row - 2 cards */}
+            <div className="flex gap-4">
+              <Card className="w-64 rounded-2xl border-white/20 bg-white/10 shadow-xl backdrop-blur-md">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
+                      <HiCash className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-white/60">Reward Engine</p>
+                      <p className="text-lg font-bold text-white">ARX plus commissions</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="w-64 rounded-2xl border-white/20 bg-white/10 shadow-xl backdrop-blur-md">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
+                      <HiOfficeBuilding className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-white/60">Connected Layers</p>
+                      <p className="text-lg font-bold text-white">Governance to wallet</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Bottom section - System Positioning */}
+            <Card className="rounded-2xl border-white/20 bg-white/10 shadow-xl backdrop-blur-md">
+              <CardContent className="p-5">
+                <p className="mb-3 text-xs uppercase tracking-wider text-white/60">System Positioning</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl bg-white/5 px-3 py-2 text-center text-sm text-white">Membership Layer</div>
+                  <div className="rounded-xl bg-white/5 px-3 py-2 text-center text-sm text-white">Identity Layer</div>
+                  <div className="rounded-xl bg-white/5 px-3 py-2 text-center text-sm text-white">Verification Layer</div>
+                  <div className="rounded-xl bg-white/5 px-3 py-2 text-center text-sm text-white">Access Control Layer</div>
+                  <div className="rounded-xl bg-white/5 px-3 py-2 text-center text-sm text-white">Rewards and Incentive Layer</div>
+                  <div className="rounded-xl bg-white/5 px-3 py-2 text-center text-sm text-white">Participation Authorization Layer</div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-
-        {/* Right — image only, no overlay cards */}
-        <div className="overflow-hidden rounded-[2rem] shadow-2xl shadow-[rgba(10,37,64,0.14)]">
-          <img
-            src="/images/dorian-labbe-y2vAEkdaAdA-unsplash.jpg"
-            alt="AUREON9 Platform"
-            className="h-full w-full object-cover min-h-[520px]"
-          />
-        </div>
       </section>
+      </ScrollReveal>
 
       {/* ── MEMBERSHIP TIERS — unique icon per card ── */}
-      <section className="space-y-6">
+      <ScrollReveal>
+      <section className="mx-auto max-w-7xl space-y-6 px-3 sm:px-4 lg:px-8">
         <div className="text-center">
           <h2 className="font-heading text-3xl font-semibold tracking-tight text-[var(--aureon-ink)]">Membership Tiers</h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600">
@@ -107,9 +193,11 @@ export default function HomePage() {
           })}
         </div>
       </section>
+      </ScrollReveal>
 
       {/* ── ECOSYSTEM INTEGRATION — each item has its own unique icon from data ── */}
-      <section className="space-y-6">
+      <ScrollReveal>
+      <section className="mx-auto max-w-7xl space-y-6 px-3 sm:px-4 lg:px-8">
         <div className="text-center">
           <h2 className="font-heading text-3xl font-semibold tracking-tight text-[var(--aureon-ink)]">Ecosystem Integration</h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600">
@@ -125,9 +213,11 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+      </ScrollReveal>
 
       {/* ── TRUST & VERIFICATION — unique icon per level ── */}
-      <section className="space-y-6">
+      <ScrollReveal>
+      <section className="mx-auto max-w-7xl space-y-6 px-3 sm:px-4 lg:px-8">
         <div className="text-center">
           <h2 className="font-heading text-3xl font-semibold tracking-tight text-[var(--aureon-ink)]">Trust and Verification</h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600">
@@ -157,6 +247,7 @@ export default function HomePage() {
           </Card>
         </div>
       </section>
+      </ScrollReveal>
 
     </div>
   );

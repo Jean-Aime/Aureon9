@@ -1,5 +1,6 @@
 import React from 'react';
 import { BadgeCheck, ChevronRight } from 'lucide-react';
+import { ScrollReveal } from '../../components/ScrollReveal';
 import { Badge } from '../../components/ui/Badge';
 import { Card, CardContent } from '../../components/ui/Card';
 import { PageHero, SectionBlock, InfoRow } from '../../components/public/PublicPrimitives';
@@ -8,7 +9,12 @@ import { tierLogic, tierOutputs, tiers } from '../../data/publicSiteContent';
 export default function TiersPage() {
   return (
     <div className="space-y-10">
+      <ScrollReveal>
+      <div className="pt-6">
       <PageHero title="Membership Tiers" intro="The baseline tier system runs from Entry through Sovereign and evaluates participants across qualification, activity, and governance logic." />
+      </div>
+      </ScrollReveal>
+      <ScrollReveal>
       <SectionBlock eyebrow="Baseline Tier Model" title="Entry through Sovereign" description="The public site exposes the tier ladder, while the dashboards later track progress, compliance, and upgrade readiness.">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {tiers.map((tier) => (
@@ -24,6 +30,8 @@ export default function TiersPage() {
           ))}
         </div>
       </SectionBlock>
+      </ScrollReveal>
+      <ScrollReveal>
       <div className="grid gap-6 lg:grid-cols-2">
         <SectionBlock eyebrow="Tier Logic" title="How progression is evaluated" description="These logic inputs are named directly in the master prompt.">
           <div className="grid gap-3 sm:grid-cols-2">{tierLogic.map((item) => <InfoRow key={item} icon={BadgeCheck} text={item} />)}</div>
@@ -32,6 +40,7 @@ export default function TiersPage() {
           <div className="grid gap-3 sm:grid-cols-2">{tierOutputs.map((item) => <InfoRow key={item} icon={ChevronRight} text={item} />)}</div>
         </SectionBlock>
       </div>
+      </ScrollReveal>
     </div>
   );
 }

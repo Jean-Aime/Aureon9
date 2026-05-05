@@ -1,4 +1,5 @@
 import React from 'react';
+import { ScrollReveal } from '../../components/ScrollReveal';
 import {
   HiOutlineBadgeCheck,
   HiOutlineBriefcase,
@@ -40,7 +41,12 @@ const systemPillarIcons = [
 export default function MembershipPage() {
   return (
     <div className="space-y-10">
+      <ScrollReveal>
+      <div className="pt-6">
       <PageHero title="Membership Overview" intro="AUREON9 is positioned as the membership, identity, verification, rewards, and participation control layer across the ecosystem." />
+      </div>
+      </ScrollReveal>
+      <ScrollReveal>
       <SectionBlock eyebrow="Core Objective" title="What AUREON9 is expected to do" description="The master prompt defines eight non-negotiable objectives for participant control across the ecosystem.">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {coreObjectives.map((item, index) => (
@@ -50,6 +56,8 @@ export default function MembershipPage() {
           ))}
         </div>
       </SectionBlock>
+      </ScrollReveal>
+      <ScrollReveal>
       <SectionBlock eyebrow="Positioning" title="System layers carried by membership" description="AUREON9 is positioned as more than a user account system. It is the control layer spanning identity, verification, access, rewards, and authorization.">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {systemPillars.map((pillar, index) => (
@@ -59,6 +67,8 @@ export default function MembershipPage() {
           ))}
         </div>
       </SectionBlock>
+      </ScrollReveal>
+      <ScrollReveal>
       <SectionBlock eyebrow="Participant Architecture" title="Mandatory participant classes" description="Each class is expected to define role definition, permissions, entry requirements, verification requirements, economic rights, upgrade pathways, restrictions, and governance obligations.">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {participantClasses.map((item) => (
@@ -66,6 +76,7 @@ export default function MembershipPage() {
           ))}
         </div>
       </SectionBlock>
+      </ScrollReveal>
     </div>
   );
 }

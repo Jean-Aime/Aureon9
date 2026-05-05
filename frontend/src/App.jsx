@@ -13,6 +13,9 @@ import RewardsPage from './pages/public/RewardsPage';
 import VerificationPage from './pages/public/VerificationPage';
 import RequestAccessPage from './pages/public/RequestAccessPage';
 import AuthPage from './pages/public/AuthPage';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import MemberDashboard from './pages/MemberDashboard';
 import AdminReviewModule from './pages/AdminReviewModule';
 import AdminSettingsDashboard from './pages/AdminSettingsDashboard';
@@ -52,9 +55,11 @@ export default function App() {
             <Route path="/rewards" element={<RewardsPage />} />
             <Route path="/verification" element={<VerificationPage />} />
             <Route path="/request-access" element={<RequestAccessPage />} />
-            <Route path="/login" element={<AuthPage />} />
+          <Route path="/login" element={<AuthPage />} />
             <Route path="/register" element={<AuthPage />} />
-            <Route path="/forgot-password" element={<AuthPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/verification-pending" element={<AuthPage />} />
           </Route>
           <Route path="/dashboard/member" element={<ProtectedRoute><MemberDashboard /></ProtectedRoute>} />

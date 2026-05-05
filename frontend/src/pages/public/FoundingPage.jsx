@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { ArrowRight, Coins, ShieldCheck, Sparkles } from 'lucide-react';
+import { ScrollReveal } from '../../components/ScrollReveal';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
 import { PageHero, SectionBlock, ShowcaseCard } from '../../components/public/PublicPrimitives';
@@ -8,7 +9,12 @@ import { PageHero, SectionBlock, ShowcaseCard } from '../../components/public/Pu
 export default function FoundingPage() {
   return (
     <div className="space-y-10">
+      <ScrollReveal>
+      <div className="pt-6">
       <PageHero title="Founding Member Program" intro="The founding program is part of the public website structure and aligns membership standing, rewards, upgrade paths, and governance obligations." />
+      </div>
+      </ScrollReveal>
+      <ScrollReveal>
       <SectionBlock eyebrow="Public Program" title="Founding is both a tier signal and a website destination" description="The master prompt names the Founding Member Program as a dedicated public page, and the rewards engine explicitly includes founding rewards.">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <ShowcaseCard title="Standing" icon={Sparkles} compact><p className="text-sm leading-6 text-slate-600">Founding sits inside the baseline tier model and carries elevated status ranking in the public story.</p></ShowcaseCard>
@@ -17,6 +23,8 @@ export default function FoundingPage() {
           <ShowcaseCard title="Governance" icon={ShieldCheck} compact><p className="text-sm leading-6 text-slate-600">Membership tiers are tied to compliance score, restrictions, and governance obligations.</p></ShowcaseCard>
         </div>
       </SectionBlock>
+      </ScrollReveal>
+      <ScrollReveal>
       <Card className="rounded-[2rem] border-white/60 bg-[linear-gradient(135deg,rgba(10,37,64,0.98),rgba(0,168,168,0.86))] text-white shadow-2xl shadow-[rgba(10,37,64,0.12)]">
         <CardContent className="grid gap-6 p-6 lg:grid-cols-[1fr_280px] lg:items-center sm:p-8">
           <div>
@@ -27,6 +35,7 @@ export default function FoundingPage() {
           <Button asChild className="rounded-full bg-white px-5 py-3 text-[var(--aureon-ink)] hover:bg-slate-100"><NavLink to="/request-access">Request Founding Access</NavLink></Button>
         </CardContent>
       </Card>
+      </ScrollReveal>
     </div>
   );
 }

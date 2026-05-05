@@ -35,6 +35,9 @@ import { useAuth } from '../hooks/useAuth';
 
 const nav = [
   { id: 'overview', label: 'Overview', icon: CheckCircle2 },
+  { id: 'aureon9-members', label: 'AUREON9 Members', icon: Users },
+  { id: 'aureon9-distributions', label: 'AUREON9 Distributions', icon: Coins },
+  { id: 'aureon9-revenue', label: 'AUREON9 Revenue', icon: BarChart3 },
   { id: 'review-queue', label: 'Review Queue', icon: FileCheck2 },
   { id: 'detailed-case', label: 'Detailed Case', icon: ShieldCheck },
   { id: 'documents-upload', label: 'Documents Upload', icon: Upload },
@@ -52,11 +55,11 @@ const nav = [
 
 const roleAccess = {
   SUPER_ADMIN: nav.map((item) => item.id),
-  EXECUTIVE: ['overview', 'review-queue', 'detailed-case', 'members', 'risk-monitor', 'rewards', 'audit-logs', 'revenue', 'notifications', 'roles', 'queue-aging', 'delivery', 'governance'],
-  LEGAL_COMPLIANCE: ['overview', 'review-queue', 'detailed-case', 'documents-upload', 'members', 'risk-monitor', 'audit-logs', 'roles', 'queue-aging', 'delivery'],
-  QUALIFICATIONS: ['overview', 'review-queue', 'detailed-case', 'members', 'roles', 'queue-aging'],
-  CUSTOMER_SUCCESS: ['overview', 'documents-upload', 'members', 'notifications'],
-  FINANCE_TREASURY: ['overview', 'members', 'rewards', 'revenue', 'notifications', 'delivery'],
+  EXECUTIVE: ['overview', 'aureon9-members', 'aureon9-distributions', 'aureon9-revenue', 'review-queue', 'detailed-case', 'members', 'risk-monitor', 'rewards', 'audit-logs', 'revenue', 'notifications', 'roles', 'queue-aging', 'delivery', 'governance'],
+  LEGAL_COMPLIANCE: ['overview', 'aureon9-members', 'review-queue', 'detailed-case', 'documents-upload', 'members', 'risk-monitor', 'audit-logs', 'roles', 'queue-aging', 'delivery'],
+  QUALIFICATIONS: ['overview', 'aureon9-members', 'review-queue', 'detailed-case', 'members', 'roles', 'queue-aging'],
+  CUSTOMER_SUCCESS: ['overview', 'aureon9-members', 'documents-upload', 'members', 'notifications'],
+  FINANCE_TREASURY: ['overview', 'aureon9-members', 'aureon9-distributions', 'aureon9-revenue', 'members', 'rewards', 'revenue', 'notifications', 'delivery'],
 };
 
 const verificationLevels = [
@@ -538,7 +541,7 @@ export default function AdminReviewModule() {
         >
           <div className="mb-6 flex items-center justify-between gap-3 px-2">
             <div className="flex items-center gap-3">
-              <img src="/images/AUREON9.png" alt="AUREON9 logo" className="h-11 w-11 object-contain" />
+              <img src="/images/AUREON9_Logo.png" alt="AUREON9 logo" className="h-11 w-11 object-contain" />
               <div>
                 <h1 className="text-lg font-semibold">AUREON9</h1>
                 <p className="text-xs text-slate-500">Global membership and rewards</p>
@@ -1592,6 +1595,188 @@ function renderAdminSection(props) {
             ))}
           </div>
           <Button onClick={saveGovernanceRules} disabled={saving}>Save Governance Settings</Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // ── AUREON9 SECTIONS ──────────────────────────────────────────────────
+  if (activeNav === 'aureon9-members') {
+    return (
+      <Card className="rounded-2xl border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle>AUREON9 Members</CardTitle>
+          <CardDescription>Member profiles with tier levels, verification status, and compliance state. Powered by AureonMember entity.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">Active Members</p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">---</p>
+              <p className="mt-1 text-xs text-slate-500">Awaiting backend integration</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">Pending Verification</p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">---</p>
+              <p className="mt-1 text-xs text-slate-500">Status = PENDING</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">Tier 7+ Members</p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">---</p>
+              <p className="mt-1 text-xs text-slate-500">Highest privilege tier</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50">
+                  <TableHead>Member</TableHead>
+                  <TableHead>Tier</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Verification</TableHead>
+                  <TableHead>Compliance</TableHead>
+                  <TableHead>Base Units</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                    Backend schema migration in progress. AUREON9 member data will display once /aureon/member endpoints are integrated.
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-medium text-amber-900">Data Model Reference</p>
+            <p className="mt-2 text-xs text-amber-800">
+              Fields: id, fullName, email, phone, country, tierId, status (ACTIVE|INACTIVE|SUSPENDED|PENDING), verificationLevel (BASIC|COMMERCIAL_VERIFIED|KYC_AML_VERIFIED), baseUnits, certificationLevel, complianceStatus
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (activeNav === 'aureon9-distributions') {
+    return (
+      <Card className="rounded-2xl border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle>AUREON9 Distributions</CardTitle>
+          <CardDescription>Pool allocations, member payouts, and distribution history. Powered by Distribution & PoolAllocation entities.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">Founders Pool</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">15%</p>
+              <p className="mt-1 text-xs text-slate-500">of NDV</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">Performance Pool</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">15%</p>
+              <p className="mt-1 text-xs text-slate-500">of NDV</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">Operations Reserve</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">30%</p>
+              <p className="mt-1 text-xs text-slate-500">of NDV</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">Treasury Growth</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">30%</p>
+              <p className="mt-1 text-xs text-slate-500">of NDV</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50">
+                  <TableHead>Period</TableHead>
+                  <TableHead>Pool</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Recipients</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                    Backend schema migration in progress. Distribution records will display once RevenueEvent and PoolAllocation tables are created.
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-medium text-amber-900">Payout Formula</p>
+            <p className="mt-2 text-xs text-amber-800">
+              Payout = (Effective Units / Total Effective Units) × Pool Amount where Effective Units = baseUnits × tier.multiplier
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (activeNav === 'aureon9-revenue') {
+    return (
+      <Card className="rounded-2xl border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle>AUREON9 Revenue</CardTitle>
+          <CardDescription>Revenue events, NDV calculations, and treasury verification. Powered by RevenueEvent entity.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">Total Revenue (YTD)</p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">---</p>
+              <p className="mt-1 text-xs text-slate-500">Awaiting backend integration</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">Net Distributable Value</p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">---</p>
+              <p className="mt-1 text-xs text-slate-500">Revenue - Costs</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-500">Verified Events</p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">---</p>
+              <p className="mt-1 text-xs text-slate-500">Treasury verified</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50">
+                  <TableHead>Date</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Gross Value</TableHead>
+                  <TableHead>Costs</TableHead>
+                  <TableHead>NDV</TableHead>
+                  <TableHead>Verified</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                    Backend schema migration in progress. Revenue events will display once /api/revenue-event endpoints are available.
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+            <p className="text-sm font-medium text-blue-900">Sources</p>
+            <p className="mt-2 text-xs text-blue-800">
+              AAL (Activity Access Layer), ODIEXA, ODIEBOARD, OPI_INTELLIGENCE, SUBSCRIPTION
+            </p>
+          </div>
         </CardContent>
       </Card>
     );

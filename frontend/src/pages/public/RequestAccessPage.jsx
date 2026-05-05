@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ScrollReveal } from '../../components/ScrollReveal';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -13,7 +14,10 @@ export default function RequestAccessPage() {
 
   return (
     <div className="space-y-10">
+      <ScrollReveal>
       <PageHero title="Request Access" intro="The website CTA leads here before registration, verification, and dashboard access." />
+      </ScrollReveal>
+      <ScrollReveal>
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <Card className="rounded-[2rem] border-white/60 bg-white/85 shadow-lg shadow-[rgba(10,37,64,0.08)]">
           <CardHeader>
@@ -51,6 +55,7 @@ export default function RequestAccessPage() {
           </CardContent>
         </Card>
       </div>
+      </ScrollReveal>
     </div>
   );
 }
