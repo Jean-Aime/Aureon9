@@ -27,7 +27,6 @@ export const publicNav = [
   { label: 'Opportunities', route: '/opportunities' },
   { label: 'Partners', route: '/partners' },
   { label: 'Rewards', route: '/rewards' },
-  { label: 'Verification', route: '/verification' },
 ];
 
 export const pageCopy = {

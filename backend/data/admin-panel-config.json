@@ -16,14 +16,14 @@
     },
     {
       "channel": "WHATSAPP",
-      "enabled": false,
+      "enabled": true,
       "provider": "Reserved",
       "retryWindowMinutes": 30,
       "mode": "DISABLED"
     },
     {
       "channel": "SMS",
-      "enabled": false,
+      "enabled": true,
       "provider": "Reserved",
       "retryWindowMinutes": 30,
       "mode": "DISABLED"

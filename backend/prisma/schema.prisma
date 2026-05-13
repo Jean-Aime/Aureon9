@@ -132,6 +132,7 @@ model User {
   passwordHash      String?
   role              UserRole             @default(MEMBER)
   isActive          Boolean              @default(true)
+  isEmailVerified   Boolean              @default(false)
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
   memberProfile     MemberProfile?
@@ -344,4 +345,229 @@ model AuditLog {
   actor                 User?                @relation("AuditActor", fields: [actorUserId], references: [id])
 
   @@map("audit_logs")
+}
+
+// ==================== AUREON9 GOVERNANCE SYSTEM ====================
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum SourceSystem {
+  AAL
+  ODIEXA
+  ODIEBOARD
+  OPI_INTELLIGENCE
+  SUBSCRIPTION
+}
+
+enum PoolType {
+  FOUNDERS
+  PERFORMANCE
+  OPERATIONS_RESERVE
+  TREASURY_GROWTH
+  STRATEGIC
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  BLOCKED
+}
+
+enum CreditType {
+  EARNED_ARX
+  FOUNDING_CREDIT
+  BONUS
+  LOCKED
+}
+
+enum VestingStatus {
+  IMMEDIATE
+  LOCKED
+  RELEASED
+}
+
+model AureonTier {
+  id                Int      @id
+  name              String   @unique
+  arc               String
+  multiplier        Decimal  @db.Decimal(10, 4)
+  upgradeType       String
+  marketplaceAccess String?
+  governanceAccess  String?
+  capitalAccess     String?
+  publicRecognition Boolean  @default(false)
+  members           AureonMember[]
+  roles             AureonRole[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model AureonRole {
+  id                    String   @id @default(cuid())
+  name                  String   @unique
+  function              String
+  authority             String?
+  compensationRights    String?
+  certificationRequired Int
+  activeRole            Boolean  @default(true)
+  minimumTierId         Int?
+  minimumTier           AureonTier? @relation(fields: [minimumTierId], references: [id])
+  members               AureonMember[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model AureonMember {
+  id                 String              @id @default(cuid())
+  fullName           String
+  email              String              @unique
+  phone              String?
+  country            String?
+  tierId             Int
+  tier               AureonTier          @relation(fields: [tierId], references: [id])
+  assignedRoleId     String?
+  assignedRole       AureonRole?         @relation(fields: [assignedRoleId], references: [id])
+  certificationLevel Int                 @default(1)
+  status             MemberStatus        @default(PENDING)
+  verificationLevel  VerificationLevel   @default(BASIC_VERIFIED)
+  baseUnits          Decimal             @default(0) @db.Decimal(18, 4)
+  sponsorId          String?
+  sponsor            AureonMember?       @relation("SponsorTree", fields: [sponsorId], references: [id])
+  referrals          AureonMember[]      @relation("SponsorTree")
+  joinDate           DateTime            @default(now())
+  lastActivityDate   DateTime?
+  complianceStatus   ReviewStatus        @default(PENDING)
+  activityLedger     ActivityLedger[]
+  revenueEvents      RevenueEvent[]
+  certifications     CertificationRecord[]
+  walletEntries      AurexWalletLedger[]
+  distributions      Distribution[]
+  upgradeRequests    UpgradeRequest[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@map("aureon_members")
+}
+
+model CertificationRecord {
+  id                  String       @id @default(cuid())
+  memberId            String
+  member              AureonMember @relation(fields: [memberId], references: [id])
+  certificationLevel  Int
+  courseCompleted     Boolean      @default(false)
+  quizScore           Decimal?     @db.Decimal(5, 2)
+  practicalTestPassed Boolean      @default(false)
+  division4Review     ReviewStatus @default(PENDING)
+  approvedBy          String?
+  issueDate           DateTime?
+  reviewDate          DateTime?
+  createdAt           DateTime     @default(now())
+
+  @@map("certification_records")
+}
+
+model ActivityLedger {
+  id             String       @id @default(cuid())
+  memberId       String
+  member         AureonMember @relation(fields: [memberId], references: [id])
+  activityType   String
+  sourceSystem   SourceSystem
+  valueScore     Decimal      @default(0) @db.Decimal(18, 4)
+  revenueValue   Decimal      @default(0) @db.Decimal(18, 2)
+  evidenceLink   String?
+  verified       Boolean      @default(false)
+  activityDate   DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+
+  @@map("activity_ledgers")
+}
+
+model RevenueEvent {
+  id                  String       @id @default(cuid())
+  source              SourceSystem
+  grossValue          Decimal      @db.Decimal(18, 2)
+  costs               Decimal      @default(0) @db.Decimal(18, 2)
+  ndv                 Decimal      @db.Decimal(18, 2)
+  currency            String       @default("USD")
+  responsibleMemberId String?
+  responsibleMember   AureonMember? @relation(fields: [responsibleMemberId], references: [id])
+  verifiedByTreasury  Boolean      @default(false)
+  eventDate           DateTime     @default(now())
+  poolAllocation      PoolAllocation?
+  createdAt           DateTime     @default(now())
+
+  @@map("revenue_events")
+}
+
+model PoolAllocation {
+  id                 String       @id @default(cuid())
+  revenueEventId     String       @unique
+  revenueEvent       RevenueEvent @relation(fields: [revenueEventId], references: [id])
+  foundersPool       Decimal      @default(0) @db.Decimal(18, 2)
+  performancePool    Decimal      @default(0) @db.Decimal(18, 2)
+  operationsReserve  Decimal      @default(0) @db.Decimal(18, 2)
+  treasuryGrowth     Decimal      @default(0) @db.Decimal(18, 2)
+  strategicPool      Decimal      @default(0) @db.Decimal(18, 2)
+  policyVersion      String
+  approvedByDivision2 Boolean     @default(false)
+  createdAt          DateTime     @default(now())
+  distributions      Distribution[]
+
+  @@map("pool_allocations")
+}
+
+model Distribution {
+  id               String           @id @default(cuid())
+  poolAllocationId String
+  poolAllocation   PoolAllocation   @relation(fields: [poolAllocationId], references: [id])
+  memberId         String
+  member           AureonMember     @relation(fields: [memberId], references: [id])
+  poolType         PoolType
+  effectiveUnits   Decimal          @db.Decimal(18, 4)
+  amount           Decimal          @db.Decimal(18, 2)
+  arxAmount        Decimal?         @db.Decimal(18, 4)
+  status           ReviewStatus     @default(PENDING)
+  period           String
+  createdAt        DateTime         @default(now())
+
+  @@map("distributions")
+}
+
+model AurexWalletLedger {
+  id               String         @id @default(cuid())
+  memberId         String
+  member           AureonMember   @relation(fields: [memberId], references: [id])
+  creditType       CreditType
+  amount           Decimal        @db.Decimal(18, 4)
+  sourcePool       PoolType?
+  vestingStatus    VestingStatus  @default(IMMEDIATE)
+  complianceStatus ReviewStatus   @default(PENDING)
+  releaseDate      DateTime?
+  createdAt        DateTime       @default(now())
+
+  @@map("aurex_wallet_ledgers")
+}
+
+model UpgradeRequest {
+  id               String       @id @default(cuid())
+  memberId         String
+  member           AureonMember @relation(fields: [memberId], references: [id])
+  currentTierId    Int
+  requestedTierId  Int
+  upgradeVector    String
+  evidence         String?
+  division4Review  ReviewStatus @default(PENDING)
+  division1Review  ReviewStatus @default(PENDING)
+  division7Review  ReviewStatus @default(PENDING)
+  finalStatus      ReviewStatus @default(PENDING)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@map("upgrade_requests")
 }

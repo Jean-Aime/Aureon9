@@ -65,7 +65,7 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/80 to-transparent" />
 
         {/* Content overlay */}
-        <div className="relative mx-auto flex h-full max-w-7xl items-center justify-between px-6 py-12 lg:px-8 lg:py-8">
+        <div className="relative mx-auto flex h-full max-w-7xl items-start justify-between px-6 pt-16 lg:px-8 lg:pt-20">
           {/* Left content */}
           <div className="flex max-w-xl flex-col justify-center">
             <Badge className="w-fit rounded-full border border-white/30 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-white backdrop-blur-sm">
@@ -78,7 +78,7 @@ export default function HomePage() {
               A governed platform for participant classification, identity verification, tier progression, AUREX rewards, and controlled opportunity access — powered by ODIEBOARD.
             </p>
             <div className="mt-8 flex gap-3">
-              <Button asChild className="whitespace-nowrap rounded-full bg-amber-500 px-5 py-3 text-sm font-semibold text-white hover:bg-amber-600 sm:px-8">
+              <Button asChild className="whitespace-nowrap rounded-full bg-slate-800 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-700 sm:px-8">
                 <NavLink className="inline-flex items-center gap-2" to="/register">
                   Become a Member <HiArrowRight className="h-5 w-5" />
                 </NavLink>

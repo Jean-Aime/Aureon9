@@ -1,22 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Activity,
-  BarChart3,
-  BellRing,
-  CheckCircle2,
-  Clock3,
-  Filter,
-  Gauge,
-  LogOut,
-  Menu,
-  Save,
-  Search,
-  Settings,
-  ShieldCheck,
-  X,
-  XCircle,
-} from 'lucide-react';
+  HiLightningBolt,
+  HiChartBar,
+  HiBell,
+  HiCheckCircle,
+  HiClock,
+  HiFilter,
+  HiSparkles,
+  HiLogout,
+  HiMenu,
+  HiSave,
+  HiSearch,
+  HiCog,
+  HiShieldCheck,
+  HiX,
+  HiXCircle,
+} from 'react-icons/hi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -28,12 +28,12 @@ import { useAuth } from '../hooks/useAuth';
 import { adminPanelAPI } from '../api/client';
 
 const sideNav = [
-  { id: 'overview', label: 'Overview', icon: Settings },
-  { id: 'channels', label: 'Channel Rules', icon: BellRing },
-  { id: 'templates', label: 'Templates', icon: ShieldCheck },
-  { id: 'timers', label: 'SLA & Timers', icon: Clock3 },
-  { id: 'analytics', label: 'Delivery Analytics', icon: BarChart3 },
-  { id: 'audit', label: 'Audit Summary', icon: Activity },
+  { id: 'overview', label: 'Overview', icon: HiCog },
+  { id: 'channels', label: 'Channel Rules', icon: HiBell },
+  { id: 'templates', label: 'Templates', icon: HiShieldCheck },
+  { id: 'timers', label: 'SLA & Timers', icon: HiClock },
+  { id: 'analytics', label: 'Delivery Analytics', icon: HiChartBar },
+  { id: 'audit', label: 'Audit Summary', icon: HiLightningBolt },
 ];
 
 function formatEnum(value) {
@@ -69,7 +69,7 @@ function MetricCard({ label, value, sub, icon: Icon }) {
             <p className="mt-1 text-xs text-slate-500">{sub}</p>
           </div>
           <div className="rounded-2xl bg-slate-100 p-3">
-            <Icon className="h-5 w-5 text-slate-700" />
+            <Icon className="h-5 w-5 text-[var(--aureon-ink)]" />
           </div>
         </div>
       </CardContent>
@@ -132,10 +132,10 @@ export default function AdminSettingsDashboard() {
   const escalatedCases = analytics?.notificationAnalytics?.queueHealth?.escalated || 0;
   const pendingCases = analytics?.notificationAnalytics?.queueHealth?.pending || 0;
   const topMetrics = [
-    { label: 'Total Events', value: totalEvents.toLocaleString(), sub: 'Recent audit/notification events', icon: BellRing },
-    { label: 'Delivery Rate', value: `${deliveryRate}%`, sub: 'Estimated governed delivery', icon: CheckCircle2 },
-    { label: 'Failed Rate', value: `${failedRate}%`, sub: 'Estimated failed delivery', icon: XCircle },
-    { label: 'Escalated Cases', value: String(escalatedCases), sub: `${pendingCases} currently pending`, icon: Gauge },
+    { label: 'Total Events', value: totalEvents.toLocaleString(), sub: 'Recent audit/notification events', icon: HiBell },
+    { label: 'Delivery Rate', value: `${deliveryRate}%`, sub: 'Estimated governed delivery', icon: HiCheckCircle },
+    { label: 'Failed Rate', value: `${failedRate}%`, sub: 'Estimated failed delivery', icon: HiXCircle },
+    { label: 'Escalated Cases', value: String(escalatedCases), sub: `${pendingCases} currently pending`, icon: HiSparkles },
   ];
 
   function updateChannel(index, key, value) {
@@ -251,7 +251,7 @@ export default function AdminSettingsDashboard() {
               onClick={() => setSidebarOpen(false)}
               aria-label="Close sidebar"
             >
-              <X className="h-5 w-5" />
+              <HiX className="h-5 w-5" />
             </button>
           </div>
 
@@ -275,7 +275,7 @@ export default function AdminSettingsDashboard() {
                     setActiveNav(item.id);
                     setSidebarOpen(false);
                   }}
-                  className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm transition ${active ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+                  className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm transition ${active ? 'bg-[var(--aureon-ink)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
                 >
                   <Icon className="h-4 w-4" />
                   <span className="font-medium">{item.label}</span>
@@ -288,7 +288,7 @@ export default function AdminSettingsDashboard() {
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm">
             <div className="flex items-start gap-3">
-              <Gauge className="mt-0.5 h-4 w-4 text-slate-700" />
+              <HiSparkles className="mt-0.5 h-4 w-4 text-slate-700" />
               <div>
                 <p className="font-medium text-slate-900">Queue Health</p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -304,7 +304,7 @@ export default function AdminSettingsDashboard() {
               variant="outline"
               className="w-full rounded-2xl border-red-200 text-red-600 hover:bg-red-50 justify-start"
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <HiLogout className="mr-2 h-4 w-4" />
               Logout
             </Button>
           </div>
@@ -320,7 +320,7 @@ export default function AdminSettingsDashboard() {
                   onClick={() => setSidebarOpen(true)}
                   aria-label="Open sidebar"
                 >
-                  <Menu className="h-5 w-5" />
+                  <HiMenu className="h-5 w-5" />
                 </button>
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Admin Notification & Governance Console</p>
@@ -329,11 +329,11 @@ export default function AdminSettingsDashboard() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="relative w-full lg:w-80">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <HiSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Input className="rounded-2xl border-slate-200 pl-9" placeholder="Search events and rules..." />
                 </div>
                 <Button variant="outline" className="rounded-2xl border-slate-200">
-                  <Filter className="mr-2 h-4 w-4" /> Filters
+                  <HiFilter className="mr-2 h-4 w-4" /> Filters
                 </Button>
               </div>
             </div>
@@ -426,7 +426,7 @@ function RenderSection({
             </div>
           ))}
           <Button className="rounded-2xl bg-[#0A2540] hover:bg-[#14385f]" onClick={saveChannels} disabled={saving}>
-            <Save className="mr-2 h-4 w-4" /> Save Channel Rules
+            <HiSave className="mr-2 h-4 w-4" /> Save Channel Rules
           </Button>
         </CardContent>
       </Card>
@@ -479,7 +479,7 @@ function RenderSection({
             </Table>
           </div>
           <Button className="rounded-2xl bg-[#0A2540] hover:bg-[#14385f]" onClick={saveTemplates} disabled={saving}>
-            <Save className="mr-2 h-4 w-4" /> Save Template Rules
+            <HiSave className="mr-2 h-4 w-4" /> Save Template Rules
           </Button>
         </CardContent>
       </Card>
@@ -533,7 +533,7 @@ function RenderSection({
             </Card>
           </div>
           <Button className="rounded-2xl bg-[#0A2540] hover:bg-[#14385f]" onClick={saveTimers} disabled={saving}>
-            <Save className="mr-2 h-4 w-4" /> Save Timer Rules
+            <HiSave className="mr-2 h-4 w-4" /> Save Timer Rules
           </Button>
         </CardContent>
       </Card>

@@ -56,7 +56,27 @@ async function main() {
   }
   console.log("✅ Participant classes seeded");
 
-  // ── Admin User ────────────────────────────────────────────────────────────
+  // ── AUREON9 Tiers ─────────────────────────────────────────────────────────
+  const aureonTiers = [
+    { id: 1, name: "Tier 1", arc: "ARC-1", multiplier: 1.0, upgradeType: "FOUNDATION" },
+    { id: 2, name: "Tier 2", arc: "ARC-2", multiplier: 1.2, upgradeType: "PROGRESSIVE" },
+    { id: 3, name: "Tier 3", arc: "ARC-3", multiplier: 1.5, upgradeType: "PROGRESSIVE" },
+    { id: 4, name: "Tier 4 - Standard Member", arc: "ARC-4", multiplier: 2.0, upgradeType: "PROGRESSIVE" },
+    { id: 5, name: "Tier 5", arc: "ARC-5", multiplier: 2.5, upgradeType: "ACHIEVEMENT" },
+    { id: 6, name: "Tier 6", arc: "ARC-6", multiplier: 3.0, upgradeType: "ACHIEVEMENT" },
+    { id: 7, name: "Tier 7", arc: "ARC-7", multiplier: 3.5, upgradeType: "LEADERSHIP" },
+    { id: 8, name: "Tier 8", arc: "ARC-8", multiplier: 4.0, upgradeType: "LEADERSHIP" },
+    { id: 9, name: "Tier 9 - Founder Elite", arc: "ARC-9", multiplier: 4.5, upgradeType: "FOUNDER" },
+  ];
+
+  for (const tier of aureonTiers) {
+    await prisma.aureonTier.upsert({
+      where: { id: tier.id },
+      update: { name: tier.name, arc: tier.arc, multiplier: tier.multiplier, upgradeType: tier.upgradeType },
+      create: { id: tier.id, name: tier.name, arc: tier.arc, multiplier: tier.multiplier, upgradeType: tier.upgradeType, marketplaceAccess: "FULL", governanceAccess: tier.id >= 4 ? "VOTE" : "VIEW", capitalAccess: tier.id >= 7 ? "PARTICIPATE" : "OBSERVE" },
+    });
+  }
+  console.log("✅ AUREON9 tiers seeded");
   const ADMIN_EMAIL    = "admin@aureon9.com";
   const ADMIN_PASSWORD = "Admin@Aureon9!";
 

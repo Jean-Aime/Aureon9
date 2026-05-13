@@ -1,27 +1,28 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import {
-  AlertTriangle,
-  BarChart3,
-  Bell,
-  Briefcase,
-  CheckCircle2,
-  Crown,
-  FileCheck,
-  LayoutGrid,
-  LineChart,
-  LogOut,
-  Menu,
-  Search,
-  Settings,
-  ShieldCheck,
-  Store,
-  TrendingUp,
-  UserCircle2,
-  Users,
-  Wallet,
-  X,
-} from 'lucide-react';
+  HiChartBar,
+  HiBriefcase,
+  HiBell,
+  HiCheckCircle,
+  HiCog,
+  HiCurrencyDollar,
+  HiDocumentText,
+  HiMenu,
+  HiSearch,
+  HiShieldCheck,
+  HiShoppingCart,
+  HiTrendingUp,
+  HiUser,
+  HiUsers,
+  HiX,
+  HiLogout,
+  HiViewGrid,
+  HiCash,
+  HiStar,
+  HiExclamation,
+} from 'react-icons/hi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -44,21 +45,21 @@ import {
 } from '../api/client';
 
 const navItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { id: 'profile', label: 'Profile & Identity', icon: UserCircle2 },
-  { id: 'verification', label: 'Verification Center', icon: ShieldCheck },
-  { id: 'membership', label: 'Membership Tier', icon: Crown },
-  { id: 'wallet', label: 'AUREX Wallet', icon: Wallet },
-  { id: 'earnings', label: 'Earnings', icon: TrendingUp },
-  { id: 'marketplace', label: 'Marketplace', icon: Store },
-  { id: 'referrals', label: 'Referral System', icon: Users },
-  { id: 'opportunities', label: 'Opportunities Feed', icon: Briefcase },
-  { id: 'applications', label: 'My Applications', icon: CheckCircle2 },
-  { id: 'documents', label: 'Documents & Compliance', icon: FileCheck },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'metrics', label: 'Performance Metrics', icon: BarChart3 },
-  { id: 'upgrade', label: 'Upgrade Path', icon: LineChart },
-  { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'dashboard', label: 'Dashboard', icon: HiViewGrid },
+  { id: 'profile', label: 'Profile & Identity', icon: HiUser },
+  { id: 'verification', label: 'Verification Center', icon: HiShieldCheck },
+  { id: 'membership', label: 'Membership Tier', icon: HiStar },
+  { id: 'wallet', label: 'AUREX Wallet', icon: HiCash },
+  { id: 'earnings', label: 'Earnings', icon: HiTrendingUp },
+  { id: 'marketplace', label: 'Marketplace', icon: HiShoppingCart },
+  { id: 'referrals', label: 'Referral System', icon: HiUsers },
+  { id: 'opportunities', label: 'Opportunities Feed', icon: HiBriefcase },
+  { id: 'applications', label: 'My Applications', icon: HiCheckCircle },
+  { id: 'documents', label: 'Documents & Compliance', icon: HiDocumentText },
+  { id: 'notifications', label: 'Notifications', icon: HiBell },
+  { id: 'metrics', label: 'Performance Metrics', icon: HiChartBar },
+  { id: 'upgrade', label: 'Upgrade Path', icon: HiTrendingUp },
+  { id: 'settings', label: 'Settings', icon: HiCog },
 ];
 
 const defaultCapabilities = {
@@ -274,7 +275,7 @@ export default function MemberDashboard() {
         businessName: member.businessName || '',
       });
     } catch (loadError) {
-      setError(loadError.response?.data?.error || 'Failed to load the member workspace.');
+      toast.error(loadError.response?.data?.error || 'Failed to load the member workspace.');
     } finally {
       setLoading(false);
     }
@@ -315,25 +316,25 @@ export default function MemberDashboard() {
       label: 'AUREX Balance',
       value: `ARX ${balanceValue.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
       sub: `${walletData?.transactions?.length || 0} wallet movements`,
-      icon: Wallet,
+      icon: HiCash,
     },
     {
       label: 'Current Tier',
       value: memberData?.tier?.name || 'Member',
       sub: `${formatEnum(memberData?.participantClass?.code || 'GENERAL_MEMBER')} class`,
-      icon: Crown,
+      icon: HiStar,
     },
     {
       label: 'Total Earnings',
       value: `ARX ${Number(earningsData?.total || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
       sub: `${earningsData?.bySource?.length || 0} earning sources`,
-      icon: TrendingUp,
+      icon: HiTrendingUp,
     },
     {
       label: 'Notifications',
       value: String(notifications.length || 0),
       sub: 'Latest system alerts and updates',
-      icon: Bell,
+      icon: HiBell,
     },
   ];
 
@@ -342,19 +343,17 @@ export default function MemberDashboard() {
       return;
     }
     setSaving(true);
-    setNotice('');
-    setError('');
     try {
       await verificationAPI.create({
         memberProfileId: auth.memberProfileId,
         requestedLevel: verificationForm.requestedLevel,
         notes: verificationForm.notes,
       });
-      setNotice('Verification request submitted.');
+      toast.success('Verification request submitted.');
       setVerificationForm((current) => ({ ...current, notes: '' }));
       await loadDashboard(auth.memberProfileId);
     } catch (requestError) {
-      setError(requestError.response?.data?.error || 'Unable to submit verification request.');
+      toast.error(requestError.response?.data?.error || 'Unable to submit verification request.');
     } finally {
       setSaving(false);
     }
@@ -365,19 +364,17 @@ export default function MemberDashboard() {
       return;
     }
     setSaving(true);
-    setNotice('');
-    setError('');
     try {
       await referralsAPI.create({
         senderProfileId: auth.memberProfileId,
         receiverEmail: referralForm.receiverEmail,
         campaignCode: referralForm.campaignCode || undefined,
       });
-      setNotice('Referral created.');
+      toast.success('Referral created.');
       setReferralForm({ receiverEmail: '', campaignCode: '' });
       await loadDashboard(auth.memberProfileId);
     } catch (requestError) {
-      setError(requestError.response?.data?.error || 'Unable to create referral.');
+      toast.error(requestError.response?.data?.error || 'Unable to create referral.');
     } finally {
       setSaving(false);
     }
@@ -385,13 +382,11 @@ export default function MemberDashboard() {
 
   async function handleDocumentUpload() {
     if (!auth?.memberProfileId || !documentForm.file) {
-      setError('Choose a file before uploading.');
+      toast.error('Choose a file before uploading.');
       return;
     }
 
     setSaving(true);
-    setNotice('');
-    setError('');
     try {
       const uploadUrlResponse = await documentsAPI.getUploadUrl({
         memberProfileId: auth.memberProfileId,
@@ -413,11 +408,11 @@ export default function MemberDashboard() {
         mimeType: documentForm.file.type || 'application/octet-stream',
         sizeBytes: documentForm.file.size,
       });
-      setNotice('Document uploaded successfully.');
+      toast.success('Document uploaded successfully.');
       setDocumentForm((current) => ({ ...current, file: null }));
       await loadDashboard(auth.memberProfileId);
     } catch (uploadError) {
-      setError(uploadError.response?.data?.error || 'Unable to upload document.');
+      toast.error(uploadError.response?.data?.error || 'Unable to upload document.');
     } finally {
       setSaving(false);
     }
@@ -428,14 +423,12 @@ export default function MemberDashboard() {
       return;
     }
     setSaving(true);
-    setNotice('');
-    setError('');
     try {
       await membersAPI.update(auth.memberProfileId, settingsForm);
-      setNotice('Profile updated.');
+      toast.success('Profile updated.');
       await loadDashboard(auth.memberProfileId);
     } catch (saveError) {
-      setError(saveError.response?.data?.error || 'Unable to save profile changes.');
+      toast.error(saveError.response?.data?.error || 'Unable to save profile changes.');
     } finally {
       setSaving(false);
     }
@@ -446,14 +439,12 @@ export default function MemberDashboard() {
       return;
     }
     setSaving(true);
-    setNotice('');
-    setError('');
     try {
       const response = await membersAPI.updatePreferences(auth.memberProfileId, preferenceState);
       setPreferenceState(response.data || preferenceState);
-      setNotice('Preference settings saved.');
+      toast.success('Preference settings saved.');
     } catch (saveError) {
-      setError(saveError.response?.data?.error || 'Unable to save preference settings.');
+      toast.error(saveError.response?.data?.error || 'Unable to save preference settings.');
     } finally {
       setSaving(false);
     }
@@ -463,10 +454,10 @@ export default function MemberDashboard() {
     const link = `${window.location.origin}/register?ref=${encodeURIComponent(referralCode)}`;
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(link);
-      setNotice('Referral link copied.');
+      toast.success('Referral link copied.');
       return;
     }
-    setNotice(link);
+    toast.info(link);
   }
 
   return (
@@ -494,7 +485,7 @@ export default function MemberDashboard() {
               onClick={() => setSidebarOpen(false)}
               aria-label="Close sidebar"
             >
-              <X className="h-5 w-5" />
+              <HiX className="h-5 w-5" />
             </button>
           </div>
 
@@ -521,7 +512,7 @@ export default function MemberDashboard() {
             </div>
           </div>
 
-          <nav className="space-y-1 pr-2">
+          <nav className="space-y-1">
             {visibleNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeNav === item.id;
@@ -532,10 +523,10 @@ export default function MemberDashboard() {
                     setActiveNav(item.id);
                     setSidebarOpen(false);
                   }}
-                  className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm transition ${isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+                  className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm font-medium transition ${isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
                 >
                   <Icon className="h-4 w-4" />
-                  <span className="font-medium">{item.label}</span>
+                  <span>{item.label}</span>
                 </button>
               );
             })}
@@ -544,15 +535,20 @@ export default function MemberDashboard() {
           <Separator className="my-5" />
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm">
-            <p className="font-medium text-slate-900">Pending Actions</p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              {pendingActions.length
-                ? `${pendingActions.length} upgrade/compliance actions need attention.`
-                : 'No pending actions. Your profile is current.'}
-            </p>
-            <p className="mt-2 text-xs leading-5 text-slate-500">
-              Class: {formatEnum(capabilities?.profile?.participantClassCode || memberData?.participantClass?.code || 'GENERAL_MEMBER')}
-            </p>
+            <div className="flex items-start gap-3">
+              <HiBell className="mt-0.5 h-4 w-4 text-slate-700" />
+              <div>
+                <p className="font-medium text-slate-900">Pending Actions</p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {pendingActions.length
+                    ? `${pendingActions.length} upgrade/compliance actions need attention.`
+                    : 'No pending actions. Your profile is current.'}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Class: {formatEnum(capabilities?.profile?.participantClassCode || memberData?.participantClass?.code || 'GENERAL_MEMBER')}
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="mt-6 border-t border-slate-200 pt-4">
@@ -561,7 +557,7 @@ export default function MemberDashboard() {
               variant="outline"
               className="w-full rounded-2xl border-red-200 text-red-600 hover:bg-red-50 justify-start"
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <HiLogout className="mr-2 h-4 w-4" />
               Logout
             </Button>
           </div>
@@ -577,7 +573,7 @@ export default function MemberDashboard() {
                   onClick={() => setSidebarOpen(true)}
                   aria-label="Open sidebar"
                 >
-                  <Menu className="h-5 w-5" />
+                  <HiMenu className="h-5 w-5" />
                 </button>
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-500">ODIECLOUD Membership Operations</p>
@@ -586,7 +582,7 @@ export default function MemberDashboard() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="relative w-full lg:w-80">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <HiSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Input className="rounded-2xl border-slate-200 pl-9" placeholder="Search panel data..." />
                 </div>
               </div>
@@ -594,8 +590,6 @@ export default function MemberDashboard() {
           </header>
 
           <div className="space-y-6 p-5 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:p-6">
-            {error && <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
-            {notice && <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div>}
             {loading ? (
               <Card className="rounded-2xl border-slate-200 shadow-sm">
                 <CardContent className="p-6 text-sm text-slate-500">Loading member workspace...</CardContent>
@@ -1071,10 +1065,10 @@ function PanelSection({
       try {
         setApplyingTo(opportunityId);
         await opportunityApplicationsAPI.create({ opportunityId });
-        alert('Application submitted successfully!');
+        toast.success('Application submitted successfully!');
         window.location.reload();
       } catch (err) {
-        alert('Error: ' + (err.response?.data?.error || err.message));
+        toast.error(err.response?.data?.error || err.message);
       } finally {
         setApplyingTo(null);
       }
@@ -1276,7 +1270,7 @@ function PanelSection({
             <div className="mt-4 space-y-3">
               {(upgradePath?.checklist || []).map((item) => (
                 <div key={item.key} className={`flex items-start gap-3 rounded-2xl px-4 py-3 text-sm ${item.met ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'}`}>
-                  {item.met ? <CheckCircle2 className="mt-0.5 h-4 w-4" /> : <AlertTriangle className="mt-0.5 h-4 w-4" />}
+                  {item.met ? <HiCheckCircle className="mt-0.5 h-4 w-4" /> : <HiExclamation className="mt-0.5 h-4 w-4" />}
                   <span>{item.label}</span>
                 </div>
               ))}
@@ -1355,7 +1349,7 @@ function PanelSection({
               `Documents on file: ${documents.length}`,
             ].map((item) => (
               <div key={item} className="flex items-start gap-3 rounded-2xl bg-amber-50 p-3 text-sm text-amber-800">
-                <AlertTriangle className="mt-0.5 h-4 w-4" />
+                <HiExclamation className="mt-0.5 h-4 w-4" />
                 <span>{item}</span>
               </div>
             ))}

@@ -8,7 +8,7 @@ import { tierLogic, tierOutputs, tiers } from '../../data/publicSiteContent';
 
 export default function TiersPage() {
   return (
-    <div className="space-y-10">
+    <div className="mx-auto max-w-7xl space-y-10 px-3 sm:px-4 lg:px-8">
       <ScrollReveal>
       <div className="pt-6">
       <PageHero title="Membership Tiers" intro="The baseline tier system runs from Entry through Sovereign and evaluates participants across qualification, activity, and governance logic." />

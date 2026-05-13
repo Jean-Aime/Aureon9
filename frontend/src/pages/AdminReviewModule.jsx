@@ -1,28 +1,27 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import {
-  Activity,
-  AlertTriangle,
-  BarChart3,
-  BellRing,
-  CheckCircle2,
-  Coins,
-  Clock3,
-  FileCheck2,
-  Filter,
-  Menu,
-  Search,
-  Settings,
-  ShieldCheck,
-  Upload,
-  Users,
-  X,
-  XCircle,
-  LogOut,
-  Bell,
-  FileClock,
-  KeyRound,
-} from 'lucide-react';
+  HiLightningBolt,
+  HiExclamation,
+  HiChartBar,
+  HiCheckCircle,
+  HiCash,
+  HiClock,
+  HiDocumentText,
+  HiFilter,
+  HiMenu,
+  HiSearch,
+  HiCog,
+  HiShieldCheck,
+  HiUpload,
+  HiUsers,
+  HiX,
+  HiXCircle,
+  HiLogout,
+  HiBell,
+  HiKey,
+} from 'react-icons/hi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -34,23 +33,23 @@ import { adminPanelAPI, documentsAPI, membersAPI, reviewQueueAPI, walletsAPI } f
 import { useAuth } from '../hooks/useAuth';
 
 const nav = [
-  { id: 'overview', label: 'Overview', icon: CheckCircle2 },
-  { id: 'aureon9-members', label: 'AUREON9 Members', icon: Users },
-  { id: 'aureon9-distributions', label: 'AUREON9 Distributions', icon: Coins },
-  { id: 'aureon9-revenue', label: 'AUREON9 Revenue', icon: BarChart3 },
-  { id: 'review-queue', label: 'Review Queue', icon: FileCheck2 },
-  { id: 'detailed-case', label: 'Detailed Case', icon: ShieldCheck },
-  { id: 'documents-upload', label: 'Documents Upload', icon: Upload },
-  { id: 'members', label: 'Member Management', icon: Users },
-  { id: 'risk-monitor', label: 'Risk Monitoring', icon: AlertTriangle },
-  { id: 'rewards', label: 'Rewards Control', icon: Coins },
-  { id: 'audit-logs', label: 'Activity Logs', icon: Activity },
-  { id: 'revenue', label: 'Revenue Dashboard', icon: BarChart3 },
-  { id: 'notifications', label: 'Notification Center', icon: Bell },
-  { id: 'roles', label: 'Role Matrix', icon: KeyRound },
-  { id: 'queue-aging', label: 'Queue Aging', icon: FileClock },
-  { id: 'delivery', label: 'Delivery Analytics', icon: BellRing },
-  { id: 'governance', label: 'Governance Settings', icon: Settings },
+  { id: 'overview', label: 'Overview', icon: HiCheckCircle },
+  { id: 'aureon9-members', label: 'AUREON9 Members', icon: HiUsers },
+  { id: 'aureon9-distributions', label: 'AUREON9 Distributions', icon: HiCash },
+  { id: 'aureon9-revenue', label: 'AUREON9 Revenue', icon: HiChartBar },
+  { id: 'review-queue', label: 'Review Queue', icon: HiDocumentText },
+  { id: 'detailed-case', label: 'Detailed Case', icon: HiShieldCheck },
+  { id: 'documents-upload', label: 'Documents Upload', icon: HiUpload },
+  { id: 'members', label: 'Member Management', icon: HiUsers },
+  { id: 'risk-monitor', label: 'Risk Monitoring', icon: HiExclamation },
+  { id: 'rewards', label: 'Rewards Control', icon: HiCash },
+  { id: 'audit-logs', label: 'Activity Logs', icon: HiLightningBolt },
+  { id: 'revenue', label: 'Revenue Dashboard', icon: HiChartBar },
+  { id: 'notifications', label: 'Notification Center', icon: HiBell },
+  { id: 'roles', label: 'Role Matrix', icon: HiKey },
+  { id: 'queue-aging', label: 'Queue Aging', icon: HiClock },
+  { id: 'delivery', label: 'Delivery Analytics', icon: HiBell },
+  { id: 'governance', label: 'Governance Settings', icon: HiCog },
 ];
 
 const roleAccess = {
@@ -145,7 +144,7 @@ function Metric({ title, value, sub, icon: Icon }) {
             <p className="mt-1 text-xs text-slate-500">{sub}</p>
           </div>
           <div className="rounded-2xl bg-slate-100 p-3">
-            <Icon className="h-5 w-5 text-slate-700" />
+            <Icon className="h-5 w-5 text-[var(--aureon-ink)]" />
           </div>
         </div>
       </CardContent>
@@ -162,8 +161,6 @@ export default function AdminReviewModule() {
   const [selectedQueueId, setSelectedQueueId] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
   const [filters, setFilters] = useState({
     status: '',
     requestedLevel: '',
@@ -212,7 +209,6 @@ export default function AdminReviewModule() {
 
   async function loadQueue(nextFilters = filters) {
     setLoading(true);
-    setError('');
 
     try {
       const { risk, ...apiFilters } = nextFilters || {};
@@ -228,7 +224,7 @@ export default function AdminReviewModule() {
         return records[0]?.id || '';
       });
     } catch (loadError) {
-      setError(loadError.response?.data?.error || 'Failed to load the review queue.');
+      toast.error(loadError.response?.data?.error || 'Failed to load the review queue.');
     } finally {
       setLoading(false);
     }
@@ -277,18 +273,16 @@ export default function AdminReviewModule() {
     }
 
     setSaving(true);
-    setError('');
-    setNotice('');
 
     try {
       await handler();
       setNotes('');
       setRequiredDocuments('');
-      setNotice(`${actionName} completed.`);
+      toast.success(`${actionName} completed.`);
       await loadQueue(filters);
       await loadAdminAnalytics();
     } catch (actionError) {
-      setError(actionError.response?.data?.error || `Unable to ${actionName.toLowerCase()}.`);
+      toast.error(actionError.response?.data?.error || `Unable to ${actionName.toLowerCase()}.`);
     } finally {
       setSaving(false);
     }
@@ -296,16 +290,14 @@ export default function AdminReviewModule() {
 
   async function updateDocumentStatus(documentId, reviewStatus) {
     setSaving(true);
-    setError('');
-    setNotice('');
 
     try {
       await documentsAPI.updateReviewStatus(documentId, { reviewStatus, notes });
-      setNotice(`Document marked ${formatEnum(reviewStatus)}.`);
+      toast.success(`Document marked ${formatEnum(reviewStatus)}.`);
       await loadQueue(filters);
       await loadAdminAnalytics();
     } catch (actionError) {
-      setError(actionError.response?.data?.error || 'Unable to update document review status.');
+      toast.error(actionError.response?.data?.error || 'Unable to update document review status.');
     } finally {
       setSaving(false);
     }
@@ -332,14 +324,12 @@ export default function AdminReviewModule() {
   async function saveMemberEdit() {
     if (!memberEditForm?.id) return;
     setSaving(true);
-    setError('');
-    setNotice('');
     try {
       await membersAPI.update(memberEditForm.id, memberEditForm);
-      setNotice('Member profile updated.');
+      toast.success('Member profile updated.');
       await loadAdminAnalytics();
     } catch (actionError) {
-      setError(actionError.response?.data?.error || 'Unable to save member changes.');
+      toast.error(actionError.response?.data?.error || 'Unable to save member changes.');
     } finally {
       setSaving(false);
     }
@@ -348,14 +338,12 @@ export default function AdminReviewModule() {
   async function toggleMemberSuspension(member, nextStatus) {
     if (!member?.id) return;
     setSaving(true);
-    setError('');
-    setNotice('');
     try {
       await membersAPI.update(member.id, { status: nextStatus });
-      setNotice(`Member status updated to ${nextStatus}.`);
+      toast.success(`Member status updated to ${nextStatus}.`);
       await loadAdminAnalytics();
     } catch (actionError) {
-      setError(actionError.response?.data?.error || 'Unable to change member status.');
+      toast.error(actionError.response?.data?.error || 'Unable to change member status.');
     } finally {
       setSaving(false);
     }
@@ -363,17 +351,15 @@ export default function AdminReviewModule() {
 
   async function submitAdminDocumentUpload() {
     if (!uploadForm.memberProfileId || !uploadForm.file) {
-      setError('Select a member and choose a file first.');
+      toast.error('Select a member and choose a file first.');
       return;
     }
     if (auth?.role === 'CUSTOMER_SUCCESS') {
-      setNotice('Customer Success can upload files but cannot submit to review queue.');
+      toast.info('Customer Success can upload files but cannot submit to review queue.');
       return;
     }
 
     setSaving(true);
-    setError('');
-    setNotice('');
     try {
       const signed = await documentsAPI.getUploadUrl({
         memberProfileId: uploadForm.memberProfileId,
@@ -395,12 +381,12 @@ export default function AdminReviewModule() {
         mimeType: uploadForm.file.type || 'application/octet-stream',
         sizeBytes: uploadForm.file.size,
       });
-      setNotice('Document uploaded and submitted to review queue.');
+      toast.success('Document uploaded and submitted to review queue.');
       setUploadForm((current) => ({ ...current, file: null }));
       await loadQueue(filters);
       await loadAdminAnalytics();
     } catch (actionError) {
-      setError(actionError.response?.data?.error || 'Unable to upload document.');
+      toast.error(actionError.response?.data?.error || 'Unable to upload document.');
     } finally {
       setSaving(false);
     }
@@ -408,17 +394,15 @@ export default function AdminReviewModule() {
 
   async function creditMemberReward() {
     if (!rewardForm.memberProfileId || !rewardForm.amount) {
-      setError('Select a member and enter amount.');
+      toast.error('Select a member and enter amount.');
       return;
     }
     const targetMember = members.find((item) => item.id === rewardForm.memberProfileId);
     if (!targetMember?.wallet?.id) {
-      setError('Selected member has no wallet.');
+      toast.error('Selected member has no wallet.');
       return;
     }
     setSaving(true);
-    setError('');
-    setNotice('');
     try {
       await walletsAPI.createTransaction({
         walletId: targetMember.wallet.id,
@@ -427,11 +411,11 @@ export default function AdminReviewModule() {
         reference: `ADMIN-${rewardForm.reason.toUpperCase()}`,
         notes: rewardForm.notes || rewardForm.reason,
       });
-      setNotice('Manual reward credited.');
+      toast.success('Manual reward credited.');
       setRewardForm((current) => ({ ...current, amount: '', notes: '' }));
       await loadAdminAnalytics();
     } catch (actionError) {
-      setError(actionError.response?.data?.error || 'Unable to credit reward.');
+      toast.error(actionError.response?.data?.error || 'Unable to credit reward.');
     } finally {
       setSaving(false);
     }
@@ -440,14 +424,12 @@ export default function AdminReviewModule() {
   async function saveRewardRules() {
     if (!panelConfig?.rewardRules) return;
     setSaving(true);
-    setError('');
-    setNotice('');
     try {
       await adminPanelAPI.updateRewardRules(panelConfig.rewardRules);
-      setNotice('Reward rules updated.');
+      toast.success('Reward rules updated.');
       await loadAdminAnalytics();
     } catch (actionError) {
-      setError(actionError.response?.data?.error || 'Unable to update reward rules.');
+      toast.error(actionError.response?.data?.error || 'Unable to update reward rules.');
     } finally {
       setSaving(false);
     }
@@ -456,14 +438,12 @@ export default function AdminReviewModule() {
   async function saveGovernanceRules() {
     if (!panelConfig) return;
     setSaving(true);
-    setError('');
-    setNotice('');
     try {
       await adminPanelAPI.updateGovernanceRules(panelConfig.deliveryRules, panelConfig.escalationRules);
-      setNotice('Governance settings updated.');
+      toast.success('Governance settings updated.');
       await loadAdminAnalytics();
     } catch (actionError) {
-      setError(actionError.response?.data?.error || 'Unable to update governance settings.');
+      toast.error(actionError.response?.data?.error || 'Unable to update governance settings.');
     } finally {
       setSaving(false);
     }
@@ -553,7 +533,7 @@ export default function AdminReviewModule() {
               onClick={() => setSidebarOpen(false)}
               aria-label="Close sidebar"
             >
-              <X className="h-5 w-5" />
+              <HiX className="h-5 w-5" />
             </button>
           </div>
 
@@ -587,7 +567,7 @@ export default function AdminReviewModule() {
                     setActiveNav(item.id);
                     setSidebarOpen(false);
                   }}
-                  className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm transition ${isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+                  className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm transition ${isActive ? 'bg-[var(--aureon-ink)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
                 >
                   <Icon className="h-4 w-4" />
                   <span className="font-medium">{item.label}</span>
@@ -600,7 +580,7 @@ export default function AdminReviewModule() {
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm">
             <div className="flex items-start gap-3">
-              <BellRing className="mt-0.5 h-4 w-4 text-slate-700" />
+              <HiBell className="mt-0.5 h-4 w-4 text-slate-700" />
               <div>
                 <p className="font-medium text-slate-900">Queue Priority</p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -617,7 +597,7 @@ export default function AdminReviewModule() {
               variant="outline"
               className="w-full rounded-2xl border-red-200 text-red-600 hover:bg-red-50 justify-start"
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <HiLogout className="mr-2 h-4 w-4" />
               Logout
             </Button>
           </div>
@@ -633,7 +613,7 @@ export default function AdminReviewModule() {
                   onClick={() => setSidebarOpen(true)}
                   aria-label="Open sidebar"
                 >
-                  <Menu className="h-5 w-5" />
+                  <HiMenu className="h-5 w-5" />
                 </button>
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Verification, Documents, Governance Controls</p>
@@ -642,7 +622,7 @@ export default function AdminReviewModule() {
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="relative w-full lg:w-72">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <HiSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Input className="rounded-2xl border-slate-200 pl-9" placeholder="Search queue, applicants, and documents..." />
                 </div>
               </div>
@@ -650,15 +630,12 @@ export default function AdminReviewModule() {
           </header>
 
           <div className="space-y-6 p-5 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:p-6">
-            {error && <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
-            {notice && <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div>}
-
             {activeNav === 'overview' && (
               <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                <Metric title="Pending Cases" value={String(pendingCount)} sub="Awaiting first decision" icon={Clock3} />
-                <Metric title="Escalated Reviews" value={String(escalatedCount)} sub="High-risk or executive queue" icon={AlertTriangle} />
-                <Metric title="Documents Received" value={String(documentCount)} sub="Across visible review cases" icon={Upload} />
-                <Metric title="Approval Rate" value={approvalRate} sub="Across visible review cases" icon={CheckCircle2} />
+                <Metric title="Pending Cases" value={String(pendingCount)} sub="Awaiting first decision" icon={HiClock} />
+                <Metric title="Escalated Reviews" value={String(escalatedCount)} sub="High-risk or executive queue" icon={HiExclamation} />
+                <Metric title="Documents Received" value={String(documentCount)} sub="Across visible review cases" icon={HiUpload} />
+                <Metric title="Approval Rate" value={approvalRate} sub="Across visible review cases" icon={HiCheckCircle} />
               </section>
             )}
 
@@ -710,7 +687,7 @@ export default function AdminReviewModule() {
                       <option value="HIGH">High</option>
                     </select>
                     <Button variant="outline" className="rounded-2xl border-slate-200" onClick={() => loadQueue(filters)}>
-                      <Filter className="mr-2 h-4 w-4" /> Refresh
+                      <HiFilter className="mr-2 h-4 w-4" /> Refresh
                     </Button>
                   </div>
                 </CardContent>
@@ -880,9 +857,9 @@ function renderAdminSection(props) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
-            <Metric title="High Risk Cases" value={String(highRisk.length)} sub="Capital, governance, or missing docs" icon={AlertTriangle} />
-            <Metric title="Medium Risk Cases" value={String(mediumRisk.length)} sub="Commercial and partial docs" icon={Clock3} />
-            <Metric title="Low Risk Cases" value={String(lowRisk.length)} sub="Standard queue flow" icon={CheckCircle2} />
+            <Metric title="High Risk Cases" value={String(highRisk.length)} sub="Capital, governance, or missing docs" icon={HiExclamation} />
+            <Metric title="Medium Risk Cases" value={String(mediumRisk.length)} sub="Commercial and partial docs" icon={HiClock} />
+            <Metric title="Low Risk Cases" value={String(lowRisk.length)} sub="Standard queue flow" icon={HiCheckCircle} />
           </div>
           <div className="rounded-2xl border border-slate-200">
             <Table>
@@ -925,8 +902,8 @@ function renderAdminSection(props) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Metric title="Total Reward Value" value={`ARX ${Number(totalRewardValue || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} sub="Across all transaction reward classes" icon={Coins} />
-            <Metric title="Reward Types" value={String(distributionRows.length)} sub="Distinct wallet transaction categories" icon={BarChart3} />
+            <Metric title="Total Reward Value" value={`ARX ${Number(totalRewardValue || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} sub="Across all transaction reward classes" icon={HiCash} />
+            <Metric title="Reward Types" value={String(distributionRows.length)} sub="Distinct wallet transaction categories" icon={HiChartBar} />
           </div>
           <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
             <Card className="rounded-2xl border-slate-200">
@@ -1013,12 +990,12 @@ function renderAdminSection(props) {
             </Button>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <Metric title="Total Members" value={String(metrics.totalMembers || 0)} sub="Active member profiles" icon={Users} />
-          <Metric title="Published Opportunities" value={String(metrics.publishedOpportunities || 0)} sub="Live marketplace/deal entries" icon={FileCheck2} />
-          <Metric title="Referral Count" value={String(metrics.referralCount || 0)} sub="Tracked referral records" icon={BellRing} />
-          <Metric title="Partner Referrals" value={String(metrics.partnerReferralCount || 0)} sub="Referrals tagged with campaign codes" icon={Users} />
-          <Metric title="Capital Cases" value={String(metrics.capitalCaseCount || 0)} sub="Capital + institutional queue entries" icon={AlertTriangle} />
-          <Metric title="Transaction Volume" value={`ARX ${Number(metrics.totalTransactionVolume || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} sub="Total wallet transaction amount" icon={BarChart3} />
+          <Metric title="Total Members" value={String(metrics.totalMembers || 0)} sub="Active member profiles" icon={HiUsers} />
+          <Metric title="Published Opportunities" value={String(metrics.publishedOpportunities || 0)} sub="Live marketplace/deal entries" icon={HiDocumentText} />
+          <Metric title="Referral Count" value={String(metrics.referralCount || 0)} sub="Tracked referral records" icon={HiBell} />
+          <Metric title="Partner Referrals" value={String(metrics.partnerReferralCount || 0)} sub="Referrals tagged with campaign codes" icon={HiUsers} />
+          <Metric title="Capital Cases" value={String(metrics.capitalCaseCount || 0)} sub="Capital + institutional queue entries" icon={HiExclamation} />
+          <Metric title="Transaction Volume" value={`ARX ${Number(metrics.totalTransactionVolume || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} sub="Total wallet transaction amount" icon={HiChartBar} />
           </div>
         </CardContent>
       </Card>
@@ -1958,7 +1935,7 @@ function renderAdminSection(props) {
                   }
                   disabled={saving || !canFinalApprove}
                 >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />Approve
+                  <HiCheckCircle className="mr-2 h-4 w-4" />Approve
                 </Button>
                 <Button
                   variant="outline"
@@ -2005,7 +1982,7 @@ function renderAdminSection(props) {
                   }
                   disabled={saving || !canRejectCase}
                 >
-                  <XCircle className="mr-2 h-4 w-4" />Reject
+                  <HiXCircle className="mr-2 h-4 w-4" />Reject
                 </Button>
               </div>
 

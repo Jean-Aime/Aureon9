@@ -52,6 +52,7 @@ import {
   handleExternalPermissions,
   handleExternalVerifyMember,
 } from './lib/external-endpoints.js';
+import aureonRoutes from './routes/aureonRoutes.js';
 
 dotenv.config();
 
@@ -438,6 +439,136 @@ app.post('/api/auth/login', async (req, res) => {
     });
 
     return res.json({ token, user: authPayload });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/auth/forgot-password - Request password reset
+app.post('/api/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      // Don't reveal if user exists (security best practice)
+      return res.json({ message: 'If an account exists, a reset link has been sent.' });
+    }
+
+    const { generateResetToken } = await import('./lib/passwordReset.js');
+    const resetToken = generateResetToken(user.id);
+
+    const { sendPasswordResetEmail } = await import('./lib/email.js');
+    await sendPasswordResetEmail(email, resetToken, user.id);
+
+    return res.json({ message: 'Password reset email sent' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/auth/reset-password - Reset password with token
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { token, userId, newPassword } = req.body;
+
+    if (!validatePassword(newPassword)) {
+      return res.status(400).json({ error: 'Password does not meet requirements' });
+    }
+
+    const { verifyResetToken, markResetTokenAsUsed, updateUserPassword } = await import('./lib/passwordReset.js');
+    const verification = verifyResetToken(token);
+
+    if (!verification.valid) {
+      return res.status(400).json({ error: verification.error });
+    }
+
+    if (verification.userId !== userId) {
+      return res.status(400).json({ error: 'Invalid token for this user' });
+    }
+
+    await updateUserPassword(userId, newPassword);
+    markResetTokenAsUsed(token);
+
+    await writeAuditLog({
+      actorUserId: userId,
+      entityType: 'User',
+      entityId: userId,
+      action: 'PASSWORD_RESET',
+    });
+
+    return res.json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/auth/verify-email - Verify email with token
+app.post('/api/auth/verify-email', async (req, res) => {
+  try {
+    const { token, userId } = req.body;
+
+    const { verifyEmailToken, markEmailAsVerified } = await import('./lib/passwordReset.js');
+    const verification = verifyEmailToken(token);
+
+    if (!verification.valid) {
+      return res.status(400).json({ error: verification.error });
+    }
+
+    if (verification.userId !== userId) {
+      return res.status(400).json({ error: 'Invalid token for this user' });
+    }
+
+    await markEmailAsVerified(token, userId);
+
+    await writeAuditLog({
+      actorUserId: userId,
+      entityType: 'User',
+      entityId: userId,
+      action: 'EMAIL_VERIFIED',
+    });
+
+    return res.json({ message: 'Email verified successfully' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/auth/resend-verification - Resend verification email
+app.post('/api/auth/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      return res.json({ message: 'If an account exists, a verification link has been sent.' });
+    }
+
+    if (user.isEmailVerified) {
+      return res.json({ message: 'Email is already verified' });
+    }
+
+    const { generateVerificationToken } = await import('./lib/passwordReset.js');
+    const verificationToken = generateVerificationToken(user.id);
+
+    const { sendVerificationEmail } = await import('./lib/email.js');
+    await sendVerificationEmail(email, verificationToken, user.id);
+
+    return res.json({ message: 'Verification email sent' });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.message });
@@ -1978,6 +2109,9 @@ app.get('/api/admin/panel-analytics', requireAuth, requireBackoffice, async (_re
     return res.status(500).json({ error: error.message });
   }
 });
+
+// ==================== AUREON9 GOVERNANCE SYSTEM ====================
+app.use('/api', aureonRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: `Route not found: ${req.method} ${req.originalUrl}` });

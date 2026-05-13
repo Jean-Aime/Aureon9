@@ -1,0 +1,31 @@
+{
+  "createMember": {
+    "fullName": "Aureon Test Builder",
+    "email": "builder@example.com",
+    "phone": "+250700000000",
+    "country": "Rwanda",
+    "tierId": 4,
+    "certificationLevel": 4,
+    "status": "ACTIVE",
+    "verificationLevel": "COMMERCIAL_VERIFIED",
+    "baseUnits": 120,
+    "complianceStatus": "APPROVED"
+  },
+  "createRevenueEvent": {
+    "source": "AAL",
+    "grossValue": 100000,
+    "costs": 25000,
+    "currency": "USD"
+  },
+  "distributePool": {
+    "poolAllocationId": "replace_with_pool_id",
+    "period": "2026-05"
+  },
+  "upgradeRequest": {
+    "memberId": "replace_with_member_id",
+    "currentTierId": 4,
+    "requestedTierId": 5,
+    "upgradeVector": "Leadership + Contribution",
+    "evidence": "Revenue and team-growth evidence link"
+  }
+}

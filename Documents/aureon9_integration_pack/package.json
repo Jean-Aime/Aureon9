@@ -1,0 +1,20 @@
+{
+  "name": "aureon9-integration-api",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "latest",
+    "express": "latest"
+  },
+  "devDependencies": {
+    "@types/express": "latest",
+    "prisma": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}

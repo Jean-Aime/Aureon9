@@ -29,7 +29,7 @@ const rewardIcons = [
 
 export default function RewardsPage() {
   return (
-    <div className="space-y-10">
+    <div className="mx-auto max-w-7xl space-y-10 px-3 sm:px-4 lg:px-8">
       <ScrollReveal>
       <div className="pt-6">
       <PageHero title="Rewards System" intro="The rewards page explains what participants can earn, how AUREX connects, and how controls prevent abuse." />

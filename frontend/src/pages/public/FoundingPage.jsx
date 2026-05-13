@@ -8,7 +8,7 @@ import { PageHero, SectionBlock, ShowcaseCard } from '../../components/public/Pu
 
 export default function FoundingPage() {
   return (
-    <div className="space-y-10">
+    <div className="mx-auto max-w-7xl space-y-10 px-3 sm:px-4 lg:px-8">
       <ScrollReveal>
       <div className="pt-6">
       <PageHero title="Founding Member Program" intro="The founding program is part of the public website structure and aligns membership standing, rewards, upgrade paths, and governance obligations." />

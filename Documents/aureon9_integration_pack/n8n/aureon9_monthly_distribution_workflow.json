@@ -1,0 +1,60 @@
+{
+  "name": "AUREON9 Monthly Founders Pool Distribution",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "field": "months", "triggerAtDayOfMonth": 1, "triggerAtHour": 6 }] } },
+      "id": "cron-monthly",
+      "name": "Monthly Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$env.API_BASE_URL}}/api/aureon/tiers",
+        "responseFormat": "json"
+      },
+      "id": "get-tiers",
+      "name": "Get AUREON9 Tiers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.API_BASE_URL}}/api/distribute-pool",
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={\n  \"poolAllocationId\": \"{{$env.CURRENT_POOL_ALLOCATION_ID}}\",\n  \"period\": \"{{$now.toFormat('yyyy-MM')}}\"\n}",
+        "responseFormat": "json"
+      },
+      "id": "distribute-pool",
+      "name": "Distribute Founders Pool",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "to": "={{$env.TREASURY_REPORT_EMAIL}}",
+        "subject": "AUREON9 Monthly Distribution Completed",
+        "message": "={{'Distribution period: ' + $now.toFormat('yyyy-MM') + '\nTotal Effective Units: ' + $json.totalEffectiveUnits + '\nFounders Pool: ' + $json.foundersPoolAmount}}"
+      },
+      "id": "send-email",
+      "name": "Send Treasury Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [940, 300]
+    }
+  ],
+  "connections": {
+    "Monthly Trigger": { "main": [[{ "node": "Get AUREON9 Tiers", "type": "main", "index": 0 }]] },
+    "Get AUREON9 Tiers": { "main": [[{ "node": "Distribute Founders Pool", "type": "main", "index": 0 }]] },
+    "Distribute Founders Pool": { "main": [[{ "node": "Send Treasury Report", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

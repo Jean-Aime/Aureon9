@@ -6,7 +6,7 @@ import { Lock } from 'lucide-react';
 
 export default function OpportunitiesPage() {
   return (
-    <div className="space-y-10">
+    <div className="mx-auto max-w-7xl space-y-10 px-3 sm:px-4 lg:px-8">
       <ScrollReveal>
       <div className="pt-6">
       <PageHero title="Opportunities" intro="Public opportunity pages introduce controlled tracks before users move into gated dashboard access." />

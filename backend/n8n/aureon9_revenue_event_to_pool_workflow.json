@@ -1,0 +1,71 @@
+{
+  "name": "AUREON9 Revenue Event to Pool Allocation",
+  "nodes": [
+    {
+      "parameters": { "httpMethod": "POST", "path": "aureon9/revenue-event", "responseMode": "responseNode" },
+      "id": "webhook",
+      "name": "Revenue Event Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.API_BASE_URL}}/api/revenue-event",
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={{JSON.stringify($json.body)}}",
+        "responseFormat": "json"
+      },
+      "id": "create-revenue-event",
+      "name": "Create Revenue Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.API_BASE_URL}}/api/revenue-event/{{$json.id}}/verify",
+        "responseFormat": "json"
+      },
+      "id": "verify-event",
+      "name": "Verify Treasury Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [740, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.API_BASE_URL}}/api/pool-allocation",
+        "sendBody": true,
+        "contentType": "json",
+        "jsonBody": "={\n  \"revenueEventId\": \"{{$json.id}}\",\n  \"policyVersion\": \"TREASURY_POLICY_v1.0\"\n}",
+        "responseFormat": "json"
+      },
+      "id": "allocate-pools",
+      "name": "Allocate Pools",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [980, 300]
+    },
+    {
+      "parameters": { "respondWith": "json", "responseBody": "={{$json}}" },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1220, 300]
+    }
+  ],
+  "connections": {
+    "Revenue Event Webhook": { "main": [[{ "node": "Create Revenue Event", "type": "main", "index": 0 }]] },
+    "Create Revenue Event": { "main": [[{ "node": "Verify Treasury Event", "type": "main", "index": 0 }]] },
+    "Verify Treasury Event": { "main": [[{ "node": "Allocate Pools", "type": "main", "index": 0 }]] },
+    "Allocate Pools": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

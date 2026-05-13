@@ -40,7 +40,7 @@ const systemPillarIcons = [
 
 export default function MembershipPage() {
   return (
-    <div className="space-y-10">
+    <div className="mx-auto max-w-7xl space-y-10 px-3 sm:px-4 lg:px-8">
       <ScrollReveal>
       <div className="pt-6">
       <PageHero title="Membership Overview" intro="AUREON9 is positioned as the membership, identity, verification, rewards, and participation control layer across the ecosystem." />

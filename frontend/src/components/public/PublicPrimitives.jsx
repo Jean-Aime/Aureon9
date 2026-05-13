@@ -3,9 +3,8 @@ import { Card, CardContent } from '../ui/Card';
 
 export function PageHero({ title, intro }) {
   return (
-    <section className="rounded-[2rem] border border-white/60 bg-white/85 px-6 py-8 shadow-lg shadow-[rgba(10,37,64,0.08)] backdrop-blur sm:px-8 sm:py-10">
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--aureon-teal)]">Public Website</p>
-      <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight text-[var(--aureon-ink)] sm:text-5xl">{title}</h1>
+    <section className="px-6 py-8 sm:px-8 sm:py-10">
+      <h1 className="font-heading text-4xl font-semibold tracking-tight text-[var(--aureon-ink)] sm:text-5xl">{title}</h1>
       <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{intro}</p>
     </section>
   );

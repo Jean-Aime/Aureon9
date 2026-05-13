@@ -8,7 +8,7 @@ import { InfoRow } from '../../components/public/PublicPrimitives';
 
 export default function PartnersPage() {
   return (
-    <div className="space-y-10">
+    <div className="mx-auto max-w-7xl space-y-10 px-3 sm:px-4 lg:px-8">
       <ScrollReveal>
       <div className="pt-6">
       <PageHero title="Partner Programs" intro="Partner programs sit inside the public website and connect acquisition, qualification, referrals, and operator participation." />
