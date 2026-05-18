@@ -479,40 +479,40 @@ export default function AuthPage() {
                     onChange={(e) => updateRegister('email', e.target.value)}
                     autoComplete="email"
                   />
-                  <div className="relative">
+                  <div className="relative flex items-center">
                     <Input
                       type={showRegisterPassword ? "text" : "password"}
                       placeholder="Password (min 8 characters) *"
                       value={registerForm.password}
                       onChange={(e) => updateRegister('password', e.target.value)}
                       autoComplete="new-password"
-                      className="pr-11"
+                      className="pr-11 w-full"
                     />
                     <button
                       type="button"
                       onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                      className="absolute right-3 text-slate-400 hover:text-slate-600 transition-colors"
                       aria-label={showRegisterPassword ? "Hide password" : "Show password"}
                     >
-                      {showRegisterPassword ? <HiEyeOff className="h-4 w-4" /> : <HiEye className="h-4 w-4" />}
+                      {showRegisterPassword ? <HiEyeOff className="h-5 w-5" /> : <HiEye className="h-5 w-5" />}
                     </button>
                   </div>
-                  <div className="relative">
+                  <div className="relative flex items-center">
                     <Input
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="Confirm password *"
                       value={registerForm.confirmPassword}
                       onChange={(e) => updateRegister('confirmPassword', e.target.value)}
                       autoComplete="new-password"
-                      className="pr-11"
+                      className="pr-11 w-full"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                      className="absolute right-3 text-slate-400 hover:text-slate-600 transition-colors"
                       aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                     >
-                      {showConfirmPassword ? <HiEyeOff className="h-4 w-4" /> : <HiEye className="h-4 w-4" />}
+                      {showConfirmPassword ? <HiEyeOff className="h-5 w-5" /> : <HiEye className="h-5 w-5" />}
                     </button>
                   </div>
                   <select
@@ -603,7 +603,7 @@ export default function AuthPage() {
               onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
               autoComplete="off"
             />
-            <div className="relative">
+            <div className="relative flex items-center">
               <Input
                 type={showLoginPassword ? "text" : "password"}
                 placeholder="Password"
@@ -611,15 +611,15 @@ export default function AuthPage() {
                 onChange={(e) => updateLogin('password', e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                 autoComplete="off"
-                className="pr-11"
+                className="pr-11 w-full"
               />
               <button
                 type="button"
                 onClick={() => setShowLoginPassword(!showLoginPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                className="absolute right-3 text-slate-400 hover:text-slate-600 transition-colors"
                 aria-label={showLoginPassword ? "Hide password" : "Show password"}
               >
-                {showLoginPassword ? <HiEyeOff className="h-4 w-4" /> : <HiEye className="h-4 w-4" />}
+                {showLoginPassword ? <HiEyeOff className="h-5 w-5" /> : <HiEye className="h-5 w-5" />}
               </button>
             </div>
             <div className="text-right">

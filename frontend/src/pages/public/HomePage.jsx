@@ -53,7 +53,7 @@ export default function HomePage() {
 
       {/* ── HERO ── */}
       <ScrollReveal>
-      <section className="relative min-h-[500px] overflow-hidden lg:h-[650px]">
+      <section className="relative min-h-[500px] overflow-hidden lg:h-[650px] -mt-[4.5rem] sm:-mt-[5rem] lg:-mt-[5.5rem] pt-[4.5rem] sm:pt-[5rem] lg:pt-[5.5rem]">
         {/* Background image extending to edges */}
         <img
           src="/images/dorian-labbe-y2vAEkdaAdA-unsplash.jpg"
