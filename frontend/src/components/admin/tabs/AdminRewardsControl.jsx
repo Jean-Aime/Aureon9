@@ -15,7 +15,8 @@ export default function AdminRewardsControl() {
     try {
       setLoading(true);
       const response = await adminPanelAPI.getConfig();
-      setRewardRules(response.data?.rewardRules || []);
+      const rules = response.data?.rewardRules;
+      setRewardRules(Array.isArray(rules) ? rules : []);
     } catch (error) {
       console.error('Failed to fetch reward rules:', error);
       setRewardRules([]);
@@ -75,7 +76,7 @@ export default function AdminRewardsControl() {
             <HiTrendingUp className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">
-                {rewardRules.reduce((sum, r) => sum + (r.rewardAmount || 0), 0).toFixed(2)}
+                {Array.isArray(rewardRules) ? rewardRules.reduce((sum, r) => sum + (r.rewardAmount || 0), 0).toFixed(2) : '0.00'}
               </div>
               <div className="text-sm text-slate-600">Total Pool</div>
             </div>
@@ -86,7 +87,7 @@ export default function AdminRewardsControl() {
             <HiUsers className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">
-                {rewardRules.filter(r => r.enabled).length}
+                {Array.isArray(rewardRules) ? rewardRules.filter(r => r.enabled).length : 0}
               </div>
               <div className="text-sm text-slate-600">Enabled</div>
             </div>
@@ -97,7 +98,7 @@ export default function AdminRewardsControl() {
             <HiCog className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">
-                {rewardRules.filter(r => !r.enabled).length}
+                {Array.isArray(rewardRules) ? rewardRules.filter(r => !r.enabled).length : 0}
               </div>
               <div className="text-sm text-slate-600">Disabled</div>
             </div>

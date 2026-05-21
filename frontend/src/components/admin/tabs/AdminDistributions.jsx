@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { HiCurrencyDollar, HiUsers, HiCheckCircle, HiClock, HiCalendar } from 'react-icons/hi';
+import { HiCurrencyDollar, HiUsers, HiCheckCircle, HiClock, HiCalendar, HiX } from 'react-icons/hi';
 import { walletsAPI, membersAPI } from '../../../api/client';
 
 export default function AdminDistributions() {
   const [distributions, setDistributions] = useState([]);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewingDist, setViewingDist] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -63,13 +64,80 @@ export default function AdminDistributions() {
 
   return (
     <div className="space-y-6">
+      {/* View Distribution Modal */}
+      {viewingDist && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/50"
+            onClick={() => setViewingDist(null)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-900">Distribution Details</h3>
+                <button
+                  onClick={() => setViewingDist(null)}
+                  className="p-2 hover:bg-slate-100 rounded-2xl transition-colors"
+                >
+                  <HiX className="text-slate-600" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Member Name</div>
+                  <div className="text-slate-900 font-medium">{viewingDist.memberName}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Email</div>
+                  <div className="text-slate-900">{viewingDist.memberEmail}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Level</div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getTierColor(viewingDist.tier)}`}>
+                    {viewingDist.tier}
+                  </span>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Total Earned</div>
+                  <div className="text-slate-900 font-semibold">{viewingDist.totalEarned.toFixed(2)} AUREX</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Current Balance</div>
+                  <div className="text-slate-900 font-semibold">{viewingDist.balance.toFixed(2)} AUREX</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Last Payout</div>
+                  <div className="text-slate-900">{new Date(viewingDist.lastDistribution).toLocaleString()}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Member ID</div>
+                  <div className="text-slate-900 font-mono text-xs">{viewingDist.id}</div>
+                </div>
+                <div className="flex gap-2 pt-4 border-t">
+                  <button
+                    onClick={() => setViewingDist(null)}
+                    className="flex-1 px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-2xl transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Distribution Management</h2>
-          <p className="text-slate-600 mt-1">Track AUREX distributions and member balances</p>
+          <h2 className="text-2xl font-bold text-slate-900">Distributions</h2>
+          <p className="text-slate-600 mt-1">Monthly payouts to members</p>
         </div>
-        <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-colors w-full sm:w-auto">
-          Process Distributions
+        <button 
+          onClick={fetchData}
+          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-colors w-full sm:w-auto"
+        >
+          Refresh
         </button>
       </div>
 
@@ -79,7 +147,7 @@ export default function AdminDistributions() {
             <HiCurrencyDollar className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">{totalDistributed.toFixed(2)}</div>
-              <div className="text-sm text-slate-600">Total Distributed</div>
+              <div className="text-sm text-slate-600">Total Paid Out</div>
             </div>
           </div>
         </div>
@@ -88,7 +156,7 @@ export default function AdminDistributions() {
             <HiClock className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">{totalPending.toFixed(2)}</div>
-              <div className="text-sm text-slate-600">Pending Balance</div>
+              <div className="text-sm text-slate-600">Waiting to Pay</div>
             </div>
           </div>
         </div>
@@ -97,7 +165,7 @@ export default function AdminDistributions() {
             <HiUsers className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">{distributions.length}</div>
-              <div className="text-sm text-slate-600">Active Members</div>
+              <div className="text-sm text-slate-600">People</div>
             </div>
           </div>
         </div>
@@ -108,29 +176,29 @@ export default function AdminDistributions() {
               <div className="text-2xl font-bold text-slate-900">
                 {(totalDistributed / (distributions.length || 1)).toFixed(2)}
               </div>
-              <div className="text-sm text-slate-600">Avg Per Member</div>
+              <div className="text-sm text-slate-600">Per Person</div>
             </div>
           </div>
         </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-6">Member Distribution Summary</h3>
+        <h3 className="text-lg font-semibold text-slate-900 mb-6">Member Payouts</h3>
 
         {loading ? (
-          <div className="text-center py-12 text-slate-600">Loading distributions...</div>
+          <div className="text-center py-12 text-slate-600">Loading...</div>
         ) : distributions.length === 0 ? (
-          <div className="text-center py-12 text-slate-600">No distribution data available</div>
+          <div className="text-center py-12 text-slate-600">No data</div>
         ) : (
           <div className="overflow-x-auto -mx-6 px-6">
             <table className="w-full min-w-max">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Member</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Tier</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Person</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Level</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Total Earned</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Current Balance</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Last Distribution</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Balance Now</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Last Payout</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
@@ -170,8 +238,11 @@ export default function AdminDistributions() {
                       </div>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <button className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-2xl transition-colors">
-                        View Details
+                      <button 
+                        onClick={() => setViewingDist(dist)}
+                        className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-2xl transition-colors"
+                      >
+                        View
                       </button>
                     </td>
                   </tr>
@@ -183,14 +254,14 @@ export default function AdminDistributions() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Distribution Schedule</h3>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Payout Schedule</h3>
         <div className="space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-slate-50 rounded-2xl">
             <div className="flex items-center gap-3">
               <HiCalendar className="text-2xl text-slate-600 flex-shrink-0" />
               <div>
-                <div className="text-sm font-medium text-slate-900">Next Distribution</div>
-                <div className="text-xs text-slate-600">Scheduled for end of month</div>
+                <div className="text-sm font-medium text-slate-900">Next Payout</div>
+                <div className="text-xs text-slate-600">End of this month</div>
               </div>
             </div>
             <span className="px-3 py-1 bg-slate-200 text-slate-800 rounded-full text-xs font-medium w-fit">Pending</span>
@@ -199,11 +270,11 @@ export default function AdminDistributions() {
             <div className="flex items-center gap-3">
               <HiCheckCircle className="text-2xl text-slate-600 flex-shrink-0" />
               <div>
-                <div className="text-sm font-medium text-slate-900">Last Distribution</div>
-                <div className="text-xs text-slate-600">Completed {new Date().toLocaleDateString()}</div>
+                <div className="text-sm font-medium text-slate-900">Last Payout</div>
+                <div className="text-xs text-slate-600">Done on {new Date().toLocaleDateString()}</div>
               </div>
             </div>
-            <span className="px-3 py-1 bg-slate-700 text-white rounded-full text-xs font-medium w-fit">Completed</span>
+            <span className="px-3 py-1 bg-slate-700 text-white rounded-full text-xs font-medium w-fit">Done</span>
           </div>
         </div>
       </div>

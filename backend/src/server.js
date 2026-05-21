@@ -320,9 +320,10 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Invalid registration payload' });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    // Check if email already exists
+    const existingUser = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
     if (existingUser) {
-      return res.status(409).json({ error: 'User already exists' });
+      return res.status(409).json({ error: 'An account with this email already exists. Please login instead.' });
     }
 
     const [defaultTier, participantClass, passwordHash, referrer] = await Promise.all([
@@ -345,8 +346,8 @@ app.post('/api/auth/register', async (req, res) => {
     const user = await prisma.$transaction(async (tx) => {
       const createdUser = await tx.user.create({
         data: {
-          email,
-          name,
+          email: email.toLowerCase().trim(),
+          name: name.trim(),
           passwordHash,
           role: 'MEMBER',
           isActive: true,
@@ -415,7 +416,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: email.toLowerCase().trim() },
       include: { memberProfile: true },
     });
 

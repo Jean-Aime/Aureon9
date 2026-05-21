@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { HiSearch, HiFilter, HiClock, HiDocumentText, HiUser, HiCheckCircle } from 'react-icons/hi';
 import { reviewQueueAPI } from '../../../api/client';
 
 export default function AdminReviewQueue() {
+  const navigate = useNavigate();
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
@@ -57,11 +59,14 @@ export default function AdminReviewQueue() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Review Queue</h2>
-          <p className="text-slate-600 mt-1">Manage verification requests and case assignments</p>
+          <p className="text-slate-600 mt-1">Cases waiting for review</p>
         </div>
-        <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-colors w-full sm:w-auto">
+        <button 
+          onClick={fetchCases}
+          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-colors w-full sm:w-auto"
+        >
           <HiFilter className="inline mr-2" />
-          Advanced Filters
+          Refresh
         </button>
       </div>
 
@@ -71,7 +76,7 @@ export default function AdminReviewQueue() {
             <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by member name or level..."
+              placeholder="Search by name or level..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-slate-500"
@@ -91,20 +96,20 @@ export default function AdminReviewQueue() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-slate-600">Loading cases...</div>
+          <div className="text-center py-12 text-slate-600">Loading...</div>
         ) : filteredCases.length === 0 ? (
-          <div className="text-center py-12 text-slate-600">No cases found</div>
+          <div className="text-center py-12 text-slate-600">No cases</div>
         ) : (
           <div className="overflow-x-auto -mx-6 px-6">
             <table className="w-full min-w-max">
               <thead>
                 <tr className="border-b border-slate-200">
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Case ID</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Member</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Requested Level</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Person</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Wants</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Status</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Priority</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Age</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Days</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
@@ -142,10 +147,7 @@ export default function AdminReviewQueue() {
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap">
                         <button 
-                          onClick={() => {
-                            console.log('Opening case details for:', caseItem.id);
-                            // TODO: Navigate to case details or open modal
-                          }}
+                          onClick={() => navigate(`/dashboard/admin/detailed-case/${caseItem.id}`)}
                           className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-2xl transition-colors"
                         >
                           Review
@@ -166,7 +168,7 @@ export default function AdminReviewQueue() {
             <HiDocumentText className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">{cases.length}</div>
-              <div className="text-sm text-slate-600">Total Cases</div>
+              <div className="text-sm text-slate-600">All Cases</div>
             </div>
           </div>
         </div>
@@ -175,7 +177,7 @@ export default function AdminReviewQueue() {
             <HiClock className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">{cases.filter(c => c.status === 'PENDING' || c.queueStatus === 'PENDING').length}</div>
-              <div className="text-sm text-slate-600">Pending</div>
+              <div className="text-sm text-slate-600">Waiting</div>
             </div>
           </div>
         </div>

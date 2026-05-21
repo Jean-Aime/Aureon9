@@ -60,11 +60,14 @@ export default function AdminActivityLogs() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Activity Logs</h2>
-          <p className="text-slate-600 mt-1">Comprehensive audit trail of all system actions</p>
+          <p className="text-slate-600 mt-1">See what everyone did</p>
         </div>
-        <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-colors w-full sm:w-auto">
+        <button 
+          onClick={fetchLogs}
+          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-colors w-full sm:w-auto"
+        >
           <HiFilter className="inline mr-2" />
-          Export Logs
+          Refresh
         </button>
       </div>
 
@@ -74,7 +77,7 @@ export default function AdminActivityLogs() {
             <HiClock className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">{logs.length}</div>
-              <div className="text-sm text-slate-600">Total Events</div>
+              <div className="text-sm text-slate-600">All Events</div>
             </div>
           </div>
         </div>
@@ -85,7 +88,7 @@ export default function AdminActivityLogs() {
               <div className="text-2xl font-bold text-slate-900">
                 {new Set(logs.map(l => l.actor?.id || l.actorUserId || l.performedBy)).size}
               </div>
-              <div className="text-sm text-slate-600">Unique Users</div>
+              <div className="text-sm text-slate-600">Different People</div>
             </div>
           </div>
         </div>
@@ -96,7 +99,7 @@ export default function AdminActivityLogs() {
               <div className="text-2xl font-bold text-slate-900">
                 {logs.filter(l => l.action && l.action.includes('APPROVE')).length}
               </div>
-              <div className="text-sm text-slate-600">Approvals</div>
+              <div className="text-sm text-slate-600">Times Approved</div>
             </div>
           </div>
         </div>
@@ -110,7 +113,7 @@ export default function AdminActivityLogs() {
                   return hoursSince <= 24;
                 }).length}
               </div>
-              <div className="text-sm text-slate-600">Last 24h</div>
+              <div className="text-sm text-slate-600">Today</div>
             </div>
           </div>
         </div>
@@ -122,7 +125,7 @@ export default function AdminActivityLogs() {
             <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by user or entity type..."
+              placeholder="Search by person or type..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-slate-500"
@@ -141,19 +144,18 @@ export default function AdminActivityLogs() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-slate-600">Loading activity logs...</div>
+          <div className="text-center py-12 text-slate-600">Loading...</div>
         ) : filteredLogs.length === 0 ? (
-          <div className="text-center py-12 text-slate-600">No activity logs found</div>
+          <div className="text-center py-12 text-slate-600">No activity yet</div>
         ) : (
           <div className="overflow-x-auto -mx-6 px-6">
             <table className="w-full min-w-max">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Timestamp</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">User</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Action</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Entity</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Details</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">When</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Who</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">What</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Item</th>
                 </tr>
               </thead>
               <tbody>
@@ -180,11 +182,6 @@ export default function AdminActivityLogs() {
                       <div className="text-sm text-slate-900">{log.entityType}</div>
                       <div className="text-xs text-slate-600 font-mono">{log.entityId?.slice(0, 12)}</div>
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="text-sm text-slate-600 max-w-md truncate">
-                        {log.changes ? JSON.stringify(log.changes).slice(0, 100) : log.payloadJson ? JSON.stringify(log.payloadJson).slice(0, 100) : 'No details'}
-                      </div>
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -194,22 +191,22 @@ export default function AdminActivityLogs() {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Recent Activity Summary</h3>
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">Quick Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-slate-50 rounded-2xl">
-            <div className="text-sm text-slate-600 mb-1">Most Active User</div>
+            <div className="text-sm text-slate-600 mb-1">Most Active Person</div>
             <div className="text-lg font-semibold text-slate-900 truncate">
               {logs.length > 0 ? (logs[0].actor?.name || logs[0].actor?.email || logs[0].performedBy || 'N/A') : 'N/A'}
             </div>
           </div>
           <div className="p-4 bg-slate-50 rounded-2xl">
-            <div className="text-sm text-slate-600 mb-1">Most Common Action</div>
+            <div className="text-sm text-slate-600 mb-1">Most Common Thing</div>
             <div className="text-lg font-semibold text-slate-900 truncate">
               {uniqueActions.length > 0 ? uniqueActions[0] : 'N/A'}
             </div>
           </div>
           <div className="p-4 bg-slate-50 rounded-2xl">
-            <div className="text-sm text-slate-600 mb-1">Last Activity</div>
+            <div className="text-sm text-slate-600 mb-1">Last Thing Done</div>
             <div className="text-lg font-semibold text-slate-900">
               {logs.length > 0 ? new Date(logs[0].createdAt).toLocaleTimeString() : 'N/A'}
             </div>

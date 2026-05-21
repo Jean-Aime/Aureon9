@@ -71,12 +71,15 @@ export default function AdminRevenue() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Revenue Tracking</h2>
-          <p className="text-slate-600 mt-1">Monitor wallet transactions and revenue flows</p>
+          <h2 className="text-2xl font-bold text-slate-900">Revenue</h2>
+          <p className="text-slate-600 mt-1">See money coming in and out</p>
         </div>
-        <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-colors w-full sm:w-auto">
+        <button 
+          onClick={fetchData}
+          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-colors w-full sm:w-auto"
+        >
           <HiFilter className="inline mr-2" />
-          Export Report
+          Refresh
         </button>
       </div>
 
@@ -86,7 +89,7 @@ export default function AdminRevenue() {
             <HiCurrencyDollar className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">${totalRevenue.toFixed(2)}</div>
-              <div className="text-sm text-slate-600">Total Credits</div>
+              <div className="text-sm text-slate-600">Money In</div>
             </div>
           </div>
         </div>
@@ -95,7 +98,7 @@ export default function AdminRevenue() {
             <HiTrendingUp className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">${totalWithdrawals.toFixed(2)}</div>
-              <div className="text-sm text-slate-600">Total Withdrawals</div>
+              <div className="text-sm text-slate-600">Money Out</div>
             </div>
           </div>
         </div>
@@ -104,7 +107,7 @@ export default function AdminRevenue() {
             <HiClock className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">{transactions.length}</div>
-              <div className="text-sm text-slate-600">Total Transactions</div>
+              <div className="text-sm text-slate-600">All Transactions</div>
             </div>
           </div>
         </div>
@@ -115,7 +118,7 @@ export default function AdminRevenue() {
               <div className="text-2xl font-bold text-slate-900">
                 ${((totalRevenue - totalWithdrawals) / (members.length || 1)).toFixed(2)}
               </div>
-              <div className="text-sm text-slate-600">Avg Per Member</div>
+              <div className="text-sm text-slate-600">Per Person</div>
             </div>
           </div>
         </div>
@@ -140,19 +143,19 @@ export default function AdminRevenue() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-slate-600">Loading transactions...</div>
+          <div className="text-center py-12 text-slate-600">Loading...</div>
         ) : filteredTransactions.length === 0 ? (
-          <div className="text-center py-12 text-slate-600">No transactions found</div>
+          <div className="text-center py-12 text-slate-600">No transactions</div>
         ) : (
           <div className="overflow-x-auto -mx-6 px-6">
             <table className="w-full min-w-max">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Date</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Member</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">When</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Person</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Type</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Amount</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Description</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Note</th>
                 </tr>
               </thead>
               <tbody>
@@ -185,7 +188,7 @@ export default function AdminRevenue() {
                     </td>
                     <td className="py-3 px-4">
                       <span className="text-sm text-slate-600 line-clamp-1">
-                        {transaction.description || transaction.reference || 'No description'}
+                        {transaction.description || transaction.reference || 'None'}
                       </span>
                     </td>
                   </tr>

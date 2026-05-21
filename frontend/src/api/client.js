@@ -148,4 +148,7 @@ export const adminPanelAPI = {
   getAnalytics: () => apiClient.get('/api/admin/panel-analytics'),
 };
 
+// Alias for backward compatibility
+export const panelConfigAPI = adminPanelAPI;
+
 export default apiClient;

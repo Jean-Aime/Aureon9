@@ -2,11 +2,16 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
+  HiChartBar,
+  HiBriefcase,
   HiBell,
   HiCheckCircle,
+  HiCog,
   HiDocumentText,
   HiMenu,
+  HiSearch,
   HiShieldCheck,
+  HiShoppingCart,
   HiTrendingUp,
   HiUser,
   HiUsers,
@@ -16,8 +21,6 @@ import {
   HiCash,
   HiStar,
   HiExclamation,
-  HiLightningBolt,
-  HiClock,
 } from 'react-icons/hi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -40,44 +43,26 @@ import {
   referenceAPI,
 } from '../api/client';
 
-const sidebarSections = [
-  {
-    title: 'HOME',
-    items: [
-      { id: 'dashboard', label: 'Dashboard', icon: HiViewGrid }
-    ]
-  },
-  {
-    title: 'ACCOUNT',
-    items: [
-      { id: 'profile', label: 'Profile & Identity', icon: HiUser },
-      { id: 'verification', label: 'Verification Center', icon: HiShieldCheck },
-      { id: 'membership', label: 'Membership Tier', icon: HiStar }
-    ]
-  },
-  {
-    title: 'FINANCE',
-    items: [
-      { id: 'wallet', label: 'AUREX Wallet', icon: HiCash }
-    ]
-  },
-  {
-    title: 'GROWTH',
-    items: [
-      { id: 'referrals', label: 'Referral System', icon: HiUsers }
-    ]
-  }
+const navItems = [
+  { id: 'dashboard', label: 'Dashboard', icon: HiViewGrid },
+  { id: 'profile', label: 'Profile & Identity', icon: HiUser },
+  { id: 'verification', label: 'Verification Center', icon: HiShieldCheck },
+  { id: 'membership', label: 'Membership Tier', icon: HiStar },
+  { id: 'wallet', label: 'AUREX Wallet', icon: HiCash },
+  { id: 'earnings', label: 'Earnings', icon: HiTrendingUp },
+  { id: 'marketplace', label: 'Marketplace', icon: HiShoppingCart },
+  { id: 'referrals', label: 'Referral System', icon: HiUsers },
+  { id: 'opportunities', label: 'Opportunities Feed', icon: HiBriefcase },
+  { id: 'applications', label: 'My Applications', icon: HiCheckCircle },
+  { id: 'documents', label: 'Documents & Compliance', icon: HiDocumentText },
+  { id: 'notifications', label: 'Notifications', icon: HiBell },
+  { id: 'metrics', label: 'Performance Metrics', icon: HiChartBar },
+  { id: 'upgrade', label: 'Upgrade Path', icon: HiTrendingUp },
+  { id: 'settings', label: 'Settings', icon: HiCog },
 ];
 
 const defaultCapabilities = {
-  screens: {
-    dashboard: true,
-    profile: true,
-    verification: true,
-    membership: true,
-    wallet: true,
-    referrals: true
-  },
+  screens: navItems.reduce((acc, item) => ({ ...acc, [item.id]: true }), {}),
   actions: {
     canEditIdentity: true,
     canChangePassword: true,
@@ -169,8 +154,6 @@ export default function MemberDashboard() {
   const { auth, logout } = useAuth();
   const [activeNav, setActiveNav] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [applyingTo, setApplyingTo] = useState(null);
@@ -215,9 +198,9 @@ export default function MemberDashboard() {
   });
 
   const visibleNavItems = useMemo(() => {
-    const allItems = sidebarSections.flatMap(section => section.items);
-    return allItems.filter((item) => capabilities?.screens?.[item.id] !== false);
+    return navItems.filter((item) => capabilities?.screens?.[item.id] !== false);
   }, [capabilities]);
+  const pageTitle = visibleNavItems.find((item) => item.id === activeNav)?.label || 'Dashboard';
   const pendingActions = (upgradePath?.checklist || []).filter((item) => !item.met);
 
   async function handleApplyOpportunity(opportunityId) {
@@ -507,7 +490,7 @@ export default function MemberDashboard() {
         >
           <div className="mb-6 flex items-center justify-between gap-3 px-2">
             <div className="flex items-center gap-3">
-              <img src="/images/AUREON9_Logo.png" alt="AUREON9 logo" className="h-11 w-11 object-contain" />
+              <img src="/images/AUREON9.png" alt="AUREON9 logo" className="h-11 w-11 object-contain" />
               <div>
                 <h1 className="text-lg font-semibold">AUREON9</h1>
                 <p className="text-xs text-slate-500">Member control center</p>
@@ -546,34 +529,22 @@ export default function MemberDashboard() {
             </div>
           </div>
 
-          <nav className="space-y-6 pr-2">
-            {sidebarSections.map((section) => {
-              const visibleItems = section.items.filter(item => capabilities?.screens?.[item.id] !== false);
-              if (visibleItems.length === 0) return null;
-              
+          <nav className="space-y-1">
+            {visibleNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeNav === item.id;
               return (
-                <div key={section.title}>
-                  <p className="px-3 text-xs font-semibold uppercase text-slate-500 mb-3">{section.title}</p>
-                  <div className="space-y-1">
-                    {visibleItems.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = activeNav === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => {
-                            setActiveNav(item.id);
-                            setSidebarOpen(false);
-                          }}
-                          className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm font-medium transition ${isActive ? 'bg-[var(--aureon-ink)] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveNav(item.id);
+                    setSidebarOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left text-sm font-medium transition ${isActive ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </button>
               );
             })}
           </nav>
@@ -596,11 +567,22 @@ export default function MemberDashboard() {
               </div>
             </div>
           </div>
+
+          <div className="mt-6 border-t border-slate-200 pt-4">
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              className="w-full rounded-2xl border-red-200 text-red-600 hover:bg-red-50 justify-start"
+            >
+              <HiLogout className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </aside>
 
         <main className="flex min-w-0 min-h-0 flex-col lg:overflow-hidden">
           <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 px-5 py-4 backdrop-blur">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -611,120 +593,14 @@ export default function MemberDashboard() {
                   <HiMenu className="h-5 w-5" />
                 </button>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Member Dashboard</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">ODIECLOUD Membership Operations</p>
+                  <h2 className="text-2xl font-semibold tracking-tight">{pageTitle}</h2>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {/* Notification Icon */}
-                <div className="relative">
-                  <button
-                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors"
-                    onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)}
-                    aria-label="Notifications"
-                  >
-                    <HiBell className="h-5 w-5" />
-                    {notifications.length > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                        {notifications.length}
-                      </span>
-                    )}
-                  </button>
-
-                  {notificationDropdownOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setNotificationDropdownOpen(false)}
-                        aria-hidden="true"
-                      />
-                      <div className="fixed left-4 right-4 top-20 sm:absolute sm:left-auto sm:right-0 sm:top-full mt-2 w-auto sm:w-96 max-h-[70vh] sm:max-h-[500px] overflow-hidden z-50 rounded-2xl border border-slate-200 bg-white shadow-lg">
-                        <div className="p-3 border-b border-slate-200 sticky top-0 bg-white z-10">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-semibold text-slate-900">Notifications</p>
-                            <span className="text-xs text-slate-500">{notifications.length} unread</span>
-                          </div>
-                        </div>
-                        <div className="max-h-[calc(70vh-60px)] sm:max-h-[400px] overflow-y-auto">
-                          {notifications.length > 0 ? (
-                            notifications.map((notification) => (
-                              <div
-                                key={notification.id}
-                                className="p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer"
-                                onClick={() => setNotificationDropdownOpen(false)}
-                              >
-                                <div className="flex items-start gap-3">
-                                  <HiBell className="mt-0.5 h-4 w-4 text-slate-600 flex-shrink-0" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm text-slate-900">{notification.title}</p>
-                                    <p className="mt-1 text-xs text-slate-600 line-clamp-2 break-words">{notification.message}</p>
-                                    <p className="mt-2 text-xs text-slate-400">{formatDate(notification.createdAt)}</p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="p-8 text-center">
-                              <HiBell className="mx-auto h-12 w-12 text-slate-300" />
-                              <p className="mt-2 text-sm text-slate-500">No notifications</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Profile Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                    className="inline-flex h-10 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-slate-700 hover:bg-slate-50 transition-colors"
-                    aria-label="Profile menu"
-                  >
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--aureon-ink)] text-white text-xs font-semibold">
-                      {auth?.name?.substring(0, 2).toUpperCase() || memberData?.displayName?.substring(0, 2).toUpperCase() || 'U'}
-                    </div>
-                    <span className="hidden sm:inline text-sm font-medium">{memberData?.displayName || auth?.name || 'Member'}</span>
-                  </button>
-
-                  {profileDropdownOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setProfileDropdownOpen(false)}
-                        aria-hidden="true"
-                      />
-                      <div className="absolute right-0 top-full mt-2 w-56 z-50 rounded-2xl border border-slate-200 bg-white shadow-lg">
-                        <div className="p-3 border-b border-slate-200">
-                          <p className="text-sm font-semibold text-slate-900">{memberData?.displayName || auth?.name || 'Member'}</p>
-                          <p className="text-xs text-slate-500">{memberData?.tier?.name || 'Member'} Tier</p>
-                        </div>
-                        <div className="p-2">
-                          <button
-                            onClick={() => {
-                              setProfileDropdownOpen(false);
-                              setActiveNav('profile');
-                              setSidebarOpen(false);
-                            }}
-                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 transition-colors"
-                          >
-                            <HiUser className="h-4 w-4" />
-                            Profile
-                          </button>
-                          <button
-                            onClick={() => {
-                              setProfileDropdownOpen(false);
-                              handleLogout();
-                            }}
-                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                          >
-                            <HiLogout className="h-4 w-4" />
-                            Logout
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                <div className="relative w-full lg:w-80">
+                  <HiSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input className="rounded-2xl border-slate-200 pl-9" placeholder="Search panel data..." />
                 </div>
               </div>
             </div>
@@ -776,9 +652,6 @@ export default function MemberDashboard() {
                 auth={auth}
                 loadDashboard={loadDashboard}
                 applyingTo={applyingTo}
-                pendingActions={pendingActions}
-                setActiveNav={setActiveNav}
-                tiers={tiers}
               />
             )}
           </div>
@@ -828,9 +701,6 @@ function PanelSection({
   auth,
   loadDashboard,
   applyingTo,
-  pendingActions,
-  setActiveNav,
-  tiers,
 }) {
   if (capabilities?.screens?.[activeNav] === false) {
     return (
@@ -881,16 +751,39 @@ function PanelSection({
 
   if (activeNav === 'membership') {
     return (
-      <MembershipTierPanel
-        memberData={memberData}
-        upgradePath={upgradePath}
-        tiers={tiers}
-        capabilities={capabilities}
-        verificationProgress={verificationProgress}
-        pendingActions={pendingActions}
-        handleVerificationRequest={handleVerificationRequest}
-        saving={saving}
-      />
+      <Card className="rounded-2xl border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle>Membership Tier Screen</CardTitle>
+          <CardDescription>Tier badge, progression, and upgrade readiness checklist.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <Info title="Current Tier" value={memberData?.tier?.name || 'Member'} />
+            <Info title="Next Tier" value={nextTierName} />
+            <Info title="Verification Level" value={formatEnum(memberData?.verificationLevel || 'UNVERIFIED')} />
+            <Info title="Member Status" value={formatEnum(memberData?.status || 'ACTIVE')} />
+          </div>
+          <div className="rounded-2xl border border-slate-200 p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-semibold">Upgrade Progress</h3>
+              <span className="text-sm text-slate-500">{upgradePath?.progress || 0}%</span>
+            </div>
+            <Progress value={upgradePath?.progress || 0} className="h-2" />
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {(upgradePath?.checklist || []).map((item) => (
+                <div key={item.key} className={`rounded-2xl px-4 py-3 text-sm ${item.met ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'}`}>
+                  {item.label}
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button onClick={handleVerificationRequest} disabled={saving || !capabilities?.actions?.canRequestUpgrade}>
+                Request Upgrade
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -898,36 +791,22 @@ function PanelSection({
     return (
       <Card className="rounded-2xl border-slate-200 shadow-sm">
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-slate-100 p-3">
-              <HiCash className="h-6 w-6 text-slate-700" />
-            </div>
-            <div>
-              <CardTitle>AUREX Wallet</CardTitle>
-              <CardDescription>Wallet balance and transaction settlement history.</CardDescription>
-            </div>
-          </div>
+          <CardTitle>AUREX Wallet</CardTitle>
+          <CardDescription>Wallet balance and transaction settlement history.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="rounded-2xl border-2 border-slate-200 bg-slate-50 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-700 font-medium">Available Balance</p>
-                <p className="mt-2 text-4xl font-bold text-slate-900">ARX {Number(walletData?.balance || 0).toLocaleString()}</p>
-                <p className="mt-1 text-sm text-slate-600">{walletData?.transactions?.length || 0} transactions</p>
-              </div>
-              <HiCash className="h-16 w-16 text-slate-300" />
-            </div>
-            <div className="mt-6 grid gap-3 md:grid-cols-2">
-              <Button className="rounded-2xl bg-[var(--aureon-ink)] hover:bg-[#0A2540]" disabled={!capabilities?.actions?.canWithdraw}>
-                <HiCash className="mr-2 h-4 w-4" />
-                Withdraw to External Wallet
-              </Button>
-              <Button variant="outline" className="rounded-2xl border-slate-300 text-slate-700 hover:bg-slate-100" disabled={!capabilities?.actions?.canTransfer}>
-                <HiUsers className="mr-2 h-4 w-4" />
-                Transfer to Member
-              </Button>
-            </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Info title="Balance" value={`ARX ${Number(walletData?.balance || 0).toLocaleString()}`} />
+            <Info title="Currency" value={walletData?.currencyCode || 'ARX'} />
+            <Info title="Transactions" value={String(walletData?.transactions?.length || 0)} />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Button variant="outline" className="rounded-2xl border-slate-200" disabled={!capabilities?.actions?.canWithdraw}>
+              Withdraw to External Wallet
+            </Button>
+            <Button variant="outline" className="rounded-2xl border-slate-200" disabled={!capabilities?.actions?.canTransfer}>
+              Transfer to Member
+            </Button>
           </div>
           <div className="rounded-2xl border border-slate-200 p-5">
             <h3 className="font-semibold">Rewards Breakdown</h3>
@@ -1328,15 +1207,8 @@ function PanelSection({
   return (
     <Card className="rounded-2xl border-slate-200 shadow-sm">
       <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-slate-100 p-3">
-            <HiViewGrid className="h-6 w-6 text-slate-700" />
-          </div>
-          <div>
-            <CardTitle>Dashboard Overview</CardTitle>
-            <CardDescription>Main dashboard with balance, tier status, referrals, earnings, pending actions, transactions, and opportunities.</CardDescription>
-          </div>
-        </div>
+        <CardTitle>Dashboard Overview</CardTitle>
+        <CardDescription>Main dashboard with balance, tier status, referrals, earnings, pending actions, transactions, and opportunities.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -1344,88 +1216,18 @@ function PanelSection({
             <StatCard key={stat.label} {...stat} />
           ))}
         </section>
-
-        {/* Quick Action Buttons */}
-        <Card className="rounded-2xl border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <HiLightningBolt className="h-5 w-5 text-slate-700" />
-              <h3 className="font-semibold text-slate-900">Quick Actions</h3>
-            </div>
-            <div className="grid gap-3 md:grid-cols-3">
-              <Button onClick={() => setActiveNav('verification')} className="rounded-2xl bg-[var(--aureon-ink)] hover:bg-[#0A2540]">
-                <HiDocumentText className="mr-2 h-4 w-4" />
-                Upload ID
-              </Button>
-              <Button onClick={() => setActiveNav('referrals')} className="rounded-2xl bg-[#0F4C81] hover:bg-[var(--aureon-ink)]">
-                <HiUsers className="mr-2 h-4 w-4" />
-                Invite Friend
-              </Button>
-              <Button onClick={() => setActiveNav('wallet')} className="rounded-2xl bg-slate-700 hover:bg-slate-800">
-                <HiCash className="mr-2 h-4 w-4" />
-                Withdraw
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pending Actions List */}
-        <Card className="rounded-2xl border-slate-200 bg-slate-50">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <HiExclamation className="h-5 w-5 text-slate-700" />
-              <h3 className="font-semibold text-slate-900">Pending Actions</h3>
-            </div>
-            {pendingActions.length > 0 ? (
-              <div className="space-y-2">
-                {pendingActions.map((action) => (
-                  <div key={action.key} className="flex items-start gap-3 rounded-2xl bg-white border border-slate-200 p-3">
-                    <HiExclamation className="mt-0.5 h-4 w-4 text-slate-600 flex-shrink-0" />
-                    <span className="text-sm text-slate-900">{action.label}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-slate-700">
-                <HiCheckCircle className="h-4 w-4" />
-                <span>No pending actions. Your profile is current.</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Tier Upgrade Info */}
-        <Card className="rounded-2xl border-slate-200">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <HiStar className="h-5 w-5 text-slate-700" />
-              <h3 className="font-semibold text-slate-900">Tier Progress</h3>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Current Tier</p>
-                <p className="text-2xl font-bold text-slate-900">{memberData?.tier?.name || 'Member'}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-slate-600">Next Tier</p>
-                <p className="text-lg font-semibold text-slate-900">{nextTierName}</p>
-                {upgradePath?.progress < 100 && (
-                  <p className="text-xs text-slate-500 mt-1">Need {pendingActions.length} more requirements</p>
-                )}
-              </div>
-            </div>
-            <div className="mt-4">
-              <Progress value={upgradePath?.progress || 0} className="h-2" />
-              <p className="mt-2 text-xs text-slate-500 text-center">{upgradePath?.progress || 0}% Complete</p>
-            </div>
-          </CardContent>
-        </Card>
-
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Info title="Current Tier" value={memberData?.tier?.name || 'Member'} />
           <Info title="Verification Level" value={formatEnum(memberData?.verificationLevel || 'UNVERIFIED')} />
           <Info title="Referral Count" value={String(referralData.length || 0)} />
           <Info title="Total Earnings" value={`ARX ${Number(earningsData?.total || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`} />
+        </div>
+        <div className="rounded-2xl border border-slate-200 p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="font-semibold">Verification Readiness</h3>
+            <span className="text-sm text-slate-500">{Math.round(verificationProgress)}%</span>
+          </div>
+          <Progress value={verificationProgress} className="h-2" />
         </div>
         <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
           <div className="rounded-2xl border border-slate-200">
@@ -1547,15 +1349,8 @@ function ProfilePanel({
   return (
     <Card className="rounded-2xl border-slate-200 shadow-sm">
       <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-slate-100 p-3">
-            <HiUser className="h-6 w-6 text-slate-700" />
-          </div>
-          <div>
-            <CardTitle>Profile & Identity</CardTitle>
-            <CardDescription>Manage your profile information, preferences, and security settings.</CardDescription>
-          </div>
-        </div>
+        <CardTitle>Profile & Identity</CardTitle>
+        <CardDescription>Manage your profile information, preferences, and security settings.</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
         <div className="grid gap-3">
@@ -1602,7 +1397,7 @@ function ProfilePanel({
             `Verification: ${formatEnum(memberData?.verificationLevel || 'UNVERIFIED')}`,
             `Documents on file: ${documents.length}`,
           ].map((item) => (
-            <div key={item} className="flex items-start gap-3 rounded-2xl bg-slate-50 p-3 text-sm text-slate-800">
+            <div key={item} className="flex items-start gap-3 rounded-2xl bg-amber-50 p-3 text-sm text-amber-800">
               <HiExclamation className="mt-0.5 h-4 w-4" />
               <span>{item}</span>
             </div>
@@ -1623,42 +1418,26 @@ function VerificationPanel({
   handleDocumentUpload,
   capabilities,
   verificationProgress,
-  documents,
-  memberData,
 }) {
   return (
     <Card className="rounded-2xl border-slate-200 shadow-sm">
       <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-slate-100 p-3">
-            <HiShieldCheck className="h-6 w-6 text-slate-700" />
-          </div>
-          <div>
-            <CardTitle>Verification Center</CardTitle>
-            <CardDescription>Verify your identity and track verification progress across multiple levels.</CardDescription>
-          </div>
-        </div>
+        <CardTitle>Verification Center</CardTitle>
+        <CardDescription>Verify your identity and track verification progress across multiple levels.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+        <div className="rounded-2xl border border-slate-200 p-5">
           <div className="mb-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <HiShieldCheck className="h-5 w-5 text-slate-700" />
-              <h3 className="font-semibold text-slate-900">Verification Progress</h3>
-            </div>
-            <span className="text-sm font-semibold text-slate-700">{Math.round(verificationProgress)}%</span>
+            <h3 className="font-semibold">Verification Progress</h3>
+            <span className="text-sm text-slate-500">{Math.round(verificationProgress)}%</span>
           </div>
-          <Progress value={verificationProgress} className="h-3 bg-slate-200" />
-          <p className="mt-2 text-sm text-slate-700">Current Level: {formatEnum(memberData?.verificationLevel || 'UNVERIFIED')}</p>
+          <Progress value={verificationProgress} className="h-2" />
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <Card className="rounded-2xl border-slate-200">
             <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <HiDocumentText className="h-5 w-5 text-slate-700" />
-                <h3 className="font-semibold">Request Verification</h3>
-              </div>
-              <div className="space-y-3">
+              <h3 className="font-semibold">Request Verification</h3>
+              <div className="mt-3 space-y-3">
                 <Input
                   placeholder="Requested Level"
                   value={verificationForm.requestedLevel}
@@ -1670,7 +1449,6 @@ function VerificationPanel({
                   onChange={(event) => setVerificationForm((current) => ({ ...current, notes: event.target.value }))}
                 />
                 <Button onClick={handleVerificationRequest} disabled={saving || !capabilities?.actions?.canEditIdentity}>
-                  <HiCheckCircle className="mr-2 h-4 w-4" />
                   Submit Request
                 </Button>
               </div>
@@ -1678,11 +1456,8 @@ function VerificationPanel({
           </Card>
           <Card className="rounded-2xl border-slate-200">
             <CardContent className="p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <HiDocumentText className="h-5 w-5 text-slate-700" />
-                <h3 className="font-semibold">Upload Document</h3>
-              </div>
-              <div className="space-y-3">
+              <h3 className="font-semibold">Upload Document</h3>
+              <div className="mt-3 space-y-3">
                 <Input
                   placeholder="Document type"
                   value={documentForm.documentType}
@@ -1690,50 +1465,14 @@ function VerificationPanel({
                 />
                 <input
                   type="file"
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm w-full"
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
                   onChange={(event) => setDocumentForm((current) => ({ ...current, file: event.target.files?.[0] || null }))}
                 />
-                <Button onClick={handleDocumentUpload} disabled={saving}>
-                  <HiDocumentText className="mr-2 h-4 w-4" />
-                  Upload
-                </Button>
+                <Button onClick={handleDocumentUpload} disabled={saving}>Upload</Button>
               </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Uploaded Documents Status */}
-        <Card className="rounded-2xl border-slate-200">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <HiDocumentText className="h-5 w-5 text-slate-700" />
-              <CardTitle className="text-lg">Your Uploaded Documents</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {documents.length > 0 ? (
-              <div className="space-y-3">
-                {documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="flex items-center gap-3">
-                      <HiDocumentText className="h-5 w-5 text-slate-600" />
-                      <div>
-                        <p className="font-medium text-slate-900">{doc.fileName || doc.documentType}</p>
-                        <p className="text-xs text-slate-500">Uploaded {formatDate(doc.uploadedAt)}</p>
-                      </div>
-                    </div>
-                    <StatusBadge value={doc.reviewStatus || 'RECEIVED'} />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center">
-                <HiDocumentText className="mx-auto h-12 w-12 text-slate-300" />
-                <p className="mt-2 text-sm text-slate-500">No documents uploaded yet</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </CardContent>
     </Card>
   );
@@ -1783,15 +1522,8 @@ function ReferralPanel({
   return (
     <Card className="rounded-2xl border-slate-200 shadow-sm">
       <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-slate-100 p-3">
-            <HiUsers className="h-6 w-6 text-slate-700" />
-          </div>
-          <div>
-            <CardTitle>Referral System</CardTitle>
-            <CardDescription>Track and manage your referrals.</CardDescription>
-          </div>
-        </div>
+        <CardTitle>Referral System</CardTitle>
+        <CardDescription>Track and manage your referrals.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-4 md:grid-cols-3">
@@ -1844,187 +1576,6 @@ function NotificationsPanel({ notifications }) {
             No notifications at this time.
           </div>
         )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function MembershipTierPanel({
-  memberData,
-  upgradePath,
-  capabilities,
-  pendingActions,
-  handleVerificationRequest,
-  saving,
-}) {
-  const tierBenefits = [
-    { code: 'MEMBER', name: 'Member', multiplier: '1.0x', benefits: 'Basic Access' },
-    { code: 'ASSOCIATE', name: 'Associate', multiplier: '1.1x', benefits: '+10% Rewards' },
-    { code: 'CERTIFIED', name: 'Certified', multiplier: '1.2x', benefits: '+20% Rewards, Verification' },
-    { code: 'EXECUTIVE', name: 'Executive', multiplier: '1.3x', benefits: '+30% Rewards, Partner Access' },
-    { code: 'STRATEGIC', name: 'Strategic', multiplier: '1.5x', benefits: '+50% Rewards, Institutional Access' },
-    { code: 'FOUNDING', name: 'Founding', multiplier: '2.0x', benefits: '+100% Rewards, Governance' },
-    { code: 'SOVEREIGN', name: 'Sovereign', multiplier: '2.5x', benefits: '+150% Rewards, Full Governance' },
-  ];
-
-  const currentTierCode = memberData?.tier?.code || 'MEMBER';
-  const currentTierIndex = tierBenefits.findIndex(t => t.code === currentTierCode);
-  const currentTier = tierBenefits[currentTierIndex] || tierBenefits[0];
-  const nextTier = tierBenefits[currentTierIndex + 1];
-
-  const memberSince = memberData?.createdAt ? new Date(memberData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A';
-
-  return (
-    <Card className="rounded-2xl border-slate-200 shadow-sm">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-slate-100 p-3">
-            <HiStar className="h-6 w-6 text-slate-700" />
-          </div>
-          <div>
-            <CardTitle>Membership Tier</CardTitle>
-            <CardDescription>Your tier status, benefits, and progression path.</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Current Tier Badge */}
-        <Card className="rounded-2xl border border-slate-200 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="rounded-full bg-slate-100 p-2">
-                  <HiStar className="h-5 w-5 text-slate-700" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wide">Your Current Tier</p>
-                  <h2 className="text-2xl font-bold text-slate-900">{currentTier.name}</h2>
-                </div>
-              </div>
-            </div>
-            
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <HiTrendingUp className="h-4 w-4 text-slate-600" />
-                  <p className="text-xs text-slate-600 font-medium">Reward Multiplier</p>
-                </div>
-                <p className="text-2xl font-bold text-slate-900">{currentTier.multiplier}</p>
-              </div>
-              
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <HiShieldCheck className="h-4 w-4 text-slate-600" />
-                  <p className="text-xs text-slate-600 font-medium">Access Level</p>
-                </div>
-                <p className="text-base font-semibold text-slate-900">{currentTier.benefits.split(',')[0]}</p>
-              </div>
-              
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <HiClock className="h-4 w-4 text-slate-600" />
-                  <p className="text-xs text-slate-600 font-medium">Member Since</p>
-                </div>
-                <p className="text-base font-semibold text-slate-900">{memberSince}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Progress to Next Tier */}
-        {nextTier && (
-          <Card className="rounded-2xl border-slate-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <HiTrendingUp className="h-5 w-5 text-slate-700" />
-                  <h3 className="font-semibold text-slate-900">Progress to {nextTier.name} Tier</h3>
-                </div>
-                <span className="text-sm font-semibold text-slate-700">{upgradePath?.progress || 0}%</span>
-              </div>
-              <Progress value={upgradePath?.progress || 0} className="h-3 mb-6" />
-              
-              <div>
-                <p className="text-sm font-medium text-slate-700 mb-3">What you need:</p>
-                <div className="space-y-2">
-                  {pendingActions.length > 0 ? (
-                    pendingActions.map((action) => (
-                      <div key={action.key} className="flex items-start gap-3 rounded-2xl bg-slate-50 border border-slate-200 p-3">
-                        <div className="mt-0.5">
-                          {action.met ? (
-                            <HiCheckCircle className="h-5 w-5 text-slate-700" />
-                          ) : (
-                            <div className="h-5 w-5 rounded border-2 border-slate-300" />
-                          )}
-                        </div>
-                        <span className="text-sm text-slate-900">{action.label}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="flex items-center gap-2 rounded-2xl bg-slate-50 border border-slate-200 p-3">
-                      <HiCheckCircle className="h-5 w-5 text-slate-700" />
-                      <span className="text-sm text-slate-700">All requirements met! Ready for upgrade.</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* All Tiers & Benefits */}
-        <Card className="rounded-2xl border-slate-200">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <HiViewGrid className="h-5 w-5 text-slate-700" />
-              <h3 className="font-semibold text-slate-900">All Tiers & Benefits</h3>
-            </div>
-            <div className="space-y-3">
-              {tierBenefits.map((tier) => {
-                const isCurrent = tier.code === currentTierCode;
-                return (
-                  <div
-                    key={tier.code}
-                    className={`flex items-center justify-between rounded-2xl border p-4 ${
-                      isCurrent
-                        ? 'border-slate-400 bg-slate-100'
-                        : 'border-slate-200 bg-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      {isCurrent && <HiStar className="h-5 w-5 text-[#D4AF37]" />}
-                      <div>
-                        <p className={`font-semibold ${
-                          isCurrent ? 'text-slate-900' : 'text-slate-700'
-                        }`}>
-                          {tier.name}
-                          {isCurrent && <span className="ml-2 text-xs text-slate-600">(Current)</span>}
-                        </p>
-                        <p className="text-sm text-slate-600">{tier.benefits}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-slate-900">{tier.multiplier}</p>
-                      <p className="text-xs text-slate-500">Multiplier</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Request Upgrade Button */}
-        <div className="flex justify-center">
-          <Button
-            onClick={handleVerificationRequest}
-            disabled={saving || !capabilities?.actions?.canRequestUpgrade || (upgradePath?.progress || 0) < 100}
-            className="rounded-2xl bg-[var(--aureon-ink)] hover:bg-[#0A2540] px-8 py-6 text-base"
-          >
-            <HiCheckCircle className="mr-2 h-5 w-5" />
-            Request Tier Upgrade
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

@@ -291,141 +291,73 @@ async function ensureVerificationCases(profileId, reviewerUserId) {
     return;
   }
 
-  const pending = await prisma.verificationRecord.create({
-    data: {
-      memberProfileId: profileId,
-      requestedLevel: 'COMMERCIAL_VERIFIED',
-      status: 'PENDING',
-      queueStatus: 'PENDING',
-      notes: 'Initial commercial verification request',
-    },
-  });
-  await prisma.reviewAction.createMany({
-    data: [
-      { verificationRecordId: pending.id, actionType: 'CREATE_CASE', actorUserId: reviewerUserId, notes: 'Case created by member' },
-      { verificationRecordId: pending.id, actionType: 'ADD_NOTE', actorUserId: reviewerUserId, notes: 'Queued for compliance review' },
-    ],
-  });
-
-  const escalated = await prisma.verificationRecord.create({
-    data: {
-      memberProfileId: profileId,
-      requestedLevel: 'CAPITAL_VERIFIED',
-      status: 'UNDER_REVIEW',
-      queueStatus: 'ESCALATED',
-      notes: 'Capital verification requiring executive review',
-      assignedReviewerId: reviewerUserId,
-    },
-  });
-  await prisma.reviewAction.createMany({
-    data: [
-      { verificationRecordId: escalated.id, actionType: 'CREATE_CASE', actorUserId: reviewerUserId, notes: 'Capital case submitted' },
-      { verificationRecordId: escalated.id, actionType: 'ASSIGN_REVIEWER', actorUserId: reviewerUserId, notes: 'Assigned to legal compliance' },
-      { verificationRecordId: escalated.id, actionType: 'ESCALATE', actorUserId: reviewerUserId, notes: 'Escalated due to capital classification' },
-    ],
-  });
-}
-
-async function ensureOpportunities() {
-  const opportunities = [
-    ['South Africa Infrastructure Syndicate', 'Institutional infrastructure investment cycle', 'INVESTMENT', 'STRATEGIC_PLUS', 'South Africa'],
-    ['Pan-African Trade Corridor Desk', 'Trade facilitation and settlement program', 'TRADE', 'EXECUTIVE_PLUS', 'Kenya'],
-    ['AUREON9 Partner Expansion Program', 'Regional partner onboarding and activation', 'PARTNERSHIP', 'CERTIFIED_PLUS', 'Nigeria'],
-    ['AUREON9 Marketplace Prime Listing', 'Featured marketplace listing for verified members', 'MARKETPLACE', 'VERIFIED_ONLY', 'Global'],
-    ['Governance Fellowship 2026', 'Career pathway into verification and governance operations', 'CAREER', 'PUBLIC', 'Global'],
+  const cases = [
+    { requestedLevel: 'IDENTITY_VERIFIED', status: 'PENDING', priority: 'HIGH' },
+    { requestedLevel: 'COMMERCIAL_VERIFIED', status: 'UNDER_REVIEW', priority: 'MEDIUM' },
+    { requestedLevel: 'INSTITUTIONAL_VERIFIED', status: 'PENDING', priority: 'LOW' },
   ];
 
-  for (const [title, description, type, accessRule, country] of opportunities) {
-    const existing = await prisma.opportunity.findFirst({ where: { title } });
-    if (existing) {
-      await prisma.opportunity.update({
-        where: { id: existing.id },
-        data: { description, type, accessRule, country, isPublished: true },
-      });
-      continue;
-    }
-
-    await prisma.opportunity.create({
-      data: { title, description, type, accessRule, country, isPublished: true },
-    });
-  }
-}
-
-async function ensureReferrals(profiles) {
-  const sender = profiles['channel.partner@aureon9.com'];
-  const receiver = profiles['general.member@aureon9.com'];
-  if (!sender || !receiver) {
-    return;
-  }
-
-  const existing = await prisma.referral.findFirst({
-    where: {
-      senderProfileId: sender.profile.id,
-      receiverProfileId: receiver.profile.id,
-    },
-  });
-
-  if (!existing) {
-    await prisma.referral.create({
+  for (const caseData of cases) {
+    await prisma.verificationRecord.create({
       data: {
-        senderProfileId: sender.profile.id,
-        receiverProfileId: receiver.profile.id,
-        receiverEmail: receiver.user.email,
-        campaignCode: 'AAL-Q2-2026',
-        status: 'ACCEPTED',
+        memberProfileId: profileId,
+        requestedLevel: caseData.requestedLevel,
+        status: caseData.status,
+        queueStatus: caseData.status,
+        priority: caseData.priority,
+        risk: caseData.priority,
+        submittedAt: new Date(),
+        reviewerId: reviewerUserId,
       },
     });
   }
 }
 
 async function main() {
-  console.log('');
-  console.log('AUREON9 seed starting...');
+  console.log('🌱 Seeding database...');
+
   await seedTiers();
+  console.log('✅ Tiers seeded');
+
   await seedClasses();
+  console.log('✅ Participant classes seeded');
 
-  const adminHash = await hash(ADMIN_PASSWORD, 10);
-  const demoHash = await hash(DEMO_PASSWORD, 10);
+  const passwordHash = await hash(DEMO_PASSWORD, 10);
+  const adminPasswordHash = await hash(ADMIN_PASSWORD, 10);
 
-  const profiles = {};
-  profiles[ADMIN_EMAIL] = await upsertProfileUser({
-    email: ADMIN_EMAIL,
-    name: 'AUREON9 Super Admin',
-    role: 'SUPER_ADMIN',
-    participantClassCode: 'FOUNDING_MEMBER',
-    tierCode: 'SOVEREIGN',
-    verificationLevel: 'GOVERNANCE_APPROVED',
-    referralCode: 'ADMIN-AUREON9',
-  }, adminHash);
+  const adminUser = await upsertProfileUser(
+    {
+      email: ADMIN_EMAIL,
+      name: 'Super Admin',
+      role: 'SUPER_ADMIN',
+      participantClassCode: 'FOUNDING_MEMBER',
+      tierCode: 'SOVEREIGN',
+      verificationLevel: 'GOVERNANCE_APPROVED',
+      referralCode: 'ADMIN-0000',
+    },
+    adminPasswordHash
+  );
+  console.log('✅ Super Admin created');
 
-  for (const userSeed of demoUsers) {
-    profiles[userSeed.email] = await upsertProfileUser(userSeed, demoHash);
+  for (const demoUser of demoUsers) {
+    const result = await upsertProfileUser(demoUser, passwordHash);
+    await ensureWalletTransactions(result.wallet.id);
+    await ensureDocuments(result.profile.id);
+    await ensureVerificationCases(result.profile.id, adminUser.user.id);
+    console.log(`✅ ${demoUser.name} created with wallet, docs, and cases`);
   }
 
-  for (const entry of Object.values(profiles)) {
-    await ensureWalletTransactions(entry.wallet.id);
-    await ensureDocuments(entry.profile.id);
-    await ensureVerificationCases(entry.profile.id, profiles['legal@aureon9.com']?.user.id || entry.user.id);
-  }
-
-  await ensureReferrals(profiles);
-  await ensureOpportunities();
-
-  console.log('');
-  console.log('Seed complete. Login accounts:');
-  console.log(`- admin@aureon9.com / ${ADMIN_PASSWORD}`);
-  for (const item of demoUsers) {
-    console.log(`- ${item.email} / ${DEMO_PASSWORD} (${item.role})`);
-  }
-  console.log('');
+  console.log('\n🎉 Database seeding complete!');
+  console.log('\n📧 Login credentials:');
+  console.log(`   Admin: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
+  console.log(`   Demo users: <email> / ${DEMO_PASSWORD}`);
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (error) => {
-    console.error('Seed failed:', error.message);
-    await prisma.$disconnect();
+  .catch((e) => {
+    console.error('❌ Seeding failed:', e);
     process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
   });

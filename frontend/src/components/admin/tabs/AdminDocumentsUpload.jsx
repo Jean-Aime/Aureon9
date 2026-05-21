@@ -8,6 +8,7 @@ export default function AdminDocumentsUpload() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedMember, setSelectedMember] = useState('ALL');
+  const [viewingDoc, setViewingDoc] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -78,14 +79,88 @@ export default function AdminDocumentsUpload() {
 
   return (
     <div className="space-y-6">
+      {/* View Document Modal */}
+      {viewingDoc && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/50"
+            onClick={() => setViewingDoc(null)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-900">Document Details</h3>
+                <button
+                  onClick={() => setViewingDoc(null)}
+                  className="p-2 hover:bg-slate-100 rounded-2xl transition-colors"
+                >
+                  <HiX className="text-slate-600" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">File Name</div>
+                  <div className="text-slate-900 font-medium">{viewingDoc.fileName}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Document Type</div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getDocTypeColor(viewingDoc.documentType)}`}>
+                    {viewingDoc.documentType}
+                  </span>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Status</div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(viewingDoc.reviewStatus)}`}>
+                    {viewingDoc.reviewStatus}
+                  </span>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Member</div>
+                  <div className="text-slate-900">
+                    {members.find(m => m.id === viewingDoc.memberProfileId)?.user?.name || 'Unknown'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Uploaded On</div>
+                  <div className="text-slate-900">{new Date(viewingDoc.uploadedAt).toLocaleString()}</div>
+                </div>
+                {viewingDoc.reviewNotes && (
+                  <div>
+                    <div className="text-sm text-slate-600 mb-1">Review Notes</div>
+                    <div className="text-slate-900 bg-slate-50 p-3 rounded-2xl">{viewingDoc.reviewNotes}</div>
+                  </div>
+                )}
+                <div className="flex gap-2 pt-4">
+                  {viewingDoc.fileUrl && (
+                    <button
+                      onClick={() => window.open(viewingDoc.fileUrl, '_blank')}
+                      className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-colors"
+                    >
+                      Open File
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setViewingDoc(null)}
+                    className="flex-1 px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-2xl transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Document Management</h2>
-          <p className="text-slate-600 mt-1">Review and manage member document uploads</p>
+          <h2 className="text-2xl font-bold text-slate-900">Documents</h2>
+          <p className="text-slate-600 mt-1">Review and manage uploaded documents</p>
         </div>
         <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-colors w-full sm:w-auto">
           <HiUpload className="inline mr-2" />
-          Bulk Upload
+          Upload for Member
         </button>
       </div>
 
@@ -95,7 +170,7 @@ export default function AdminDocumentsUpload() {
             <HiDocumentText className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">{documents.length}</div>
-              <div className="text-sm text-slate-600">Total Documents</div>
+              <div className="text-sm text-slate-600">All Documents</div>
             </div>
           </div>
         </div>
@@ -106,7 +181,7 @@ export default function AdminDocumentsUpload() {
               <div className="text-2xl font-bold text-slate-900">
                 {documents.filter(d => d.reviewStatus === 'PENDING').length}
               </div>
-              <div className="text-sm text-slate-600">Pending Review</div>
+              <div className="text-sm text-slate-600">Waiting</div>
             </div>
           </div>
         </div>
@@ -163,9 +238,9 @@ export default function AdminDocumentsUpload() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-slate-600">Loading documents...</div>
+          <div className="text-center py-12 text-slate-600">Loading...</div>
         ) : filteredDocuments.length === 0 ? (
-          <div className="text-center py-12 text-slate-600">No documents found</div>
+          <div className="text-center py-12 text-slate-600">No documents</div>
         ) : (
           <div className="space-y-3">
             {filteredDocuments.map((doc) => {
@@ -205,23 +280,26 @@ export default function AdminDocumentsUpload() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <button className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-2xl transition-colors">
+                      <button 
+                        onClick={() => setViewingDoc(doc)}
+                        className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-2xl transition-colors"
+                      >
                         View
                       </button>
                       {doc.reviewStatus === 'PENDING' && (
                         <>
-                          <button
-                            onClick={() => handleReviewDocument(doc.id, 'ACCEPTED', 'Document approved')}
-                            className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-2xl transition-colors"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleReviewDocument(doc.id, 'REJECTED', 'Document rejected')}
-                            className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-2xl transition-colors"
-                          >
-                            Reject
-                          </button>
+                      <button 
+                        onClick={() => handleReviewDocument(doc.id, 'ACCEPTED', 'Approved')}
+                        className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-2xl transition-colors flex items-center gap-1"
+                      >
+                        <HiCheckCircle /> Approve
+                      </button>
+                      <button
+                        onClick={() => handleReviewDocument(doc.id, 'REJECTED', 'Rejected')}
+                        className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-2xl transition-colors flex items-center gap-1"
+                      >
+                        <HiX /> Reject
+                      </button>
                         </>
                       )}
                       <button

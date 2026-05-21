@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { HiMenu, HiX, HiViewGrid, HiUsers, HiCash, HiChartBar, HiDocumentText, HiShieldCheck, HiUpload, HiExclamation, HiLightningBolt, HiBell, HiKey, HiClock, HiCog, HiLogout, HiClipboardList, HiTrendingUp, HiCurrencyDollar, HiUserGroup, HiGift, HiClipboardCheck } from 'react-icons/hi';
+import { HiMenu, HiX, HiViewGrid, HiUsers, HiCash, HiChartBar, HiDocumentText, HiShieldCheck, HiUpload, HiExclamation, HiLightningBolt, HiBell, HiKey, HiClock, HiCog, HiLogout, HiClipboardList, HiTrendingUp, HiCurrencyDollar, HiUserGroup, HiGift, HiClipboardCheck, HiUser } from 'react-icons/hi';
 import { Button } from '../components/ui/Button';
 import { Separator } from '../components/ui/Separator';
 
@@ -56,10 +56,7 @@ const sidebarSections = [
   {
     title: 'GOVERNANCE & COMPLIANCE',
     items: [
-      { id: 'risk-monitor', label: 'Risk Monitoring', icon: HiShieldCheck, description: 'High-risk cases' },
-      { id: 'activity-logs', label: 'Activity Logs', icon: HiClock, description: 'Audit trail' },
-      { id: 'role-matrix', label: 'Role Matrix', icon: HiKey, description: 'Permissions' },
-      { id: 'governance', label: 'Governance Settings', icon: HiCog, description: 'System rules' }
+      { id: 'activity-logs', label: 'Activity Logs', icon: HiClock, description: 'Audit trail' }
     ]
   },
   {
@@ -77,12 +74,12 @@ const sidebarSections = [
 ];
 
 const roleAccess = {
-  SUPER_ADMIN: ['overview', 'review-queue', 'detailed-case', 'documents-upload', 'members', 'revenue', 'distributions', 'rewards', 'revenue-chart', 'risk-monitor', 'activity-logs', 'role-matrix', 'governance', 'notifications', 'webhooks'],
-  EXECUTIVE: ['overview', 'review-queue', 'detailed-case', 'members', 'revenue', 'distributions', 'rewards', 'revenue-chart', 'risk-monitor', 'activity-logs', 'role-matrix', 'governance', 'notifications'],
-  LEGAL_COMPLIANCE: ['overview', 'review-queue', 'detailed-case', 'documents-upload', 'members', 'risk-monitor', 'activity-logs', 'role-matrix'],
-  QUALIFICATIONS: ['overview', 'review-queue', 'detailed-case', 'members', 'role-matrix'],
+  SUPER_ADMIN: ['overview', 'review-queue', 'detailed-case', 'documents-upload', 'members', 'revenue', 'distributions', 'rewards', 'activity-logs', 'notifications', 'webhooks'],
+  EXECUTIVE: ['overview', 'review-queue', 'detailed-case', 'members', 'revenue', 'distributions', 'rewards', 'activity-logs', 'notifications'],
+  LEGAL_COMPLIANCE: ['overview', 'review-queue', 'detailed-case', 'documents-upload', 'members', 'activity-logs'],
+  QUALIFICATIONS: ['overview', 'review-queue', 'detailed-case', 'members'],
   CUSTOMER_SUCCESS: ['overview', 'documents-upload', 'members', 'notifications'],
-  FINANCE_TREASURY: ['overview', 'members', 'revenue', 'distributions', 'rewards', 'revenue-chart', 'notifications']
+  FINANCE_TREASURY: ['overview', 'members', 'revenue', 'distributions', 'rewards', 'notifications']
 };
 
 export default function AdminDashboard() {
@@ -91,6 +88,9 @@ export default function AdminDashboard() {
   const { auth, logout } = useAuth();
   const [activeTab, setActiveTab] = useState(tab || 'overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
+  const [notificationCount] = useState(3);
 
   // Sync activeTab with URL param
   useEffect(() => {
@@ -98,6 +98,16 @@ export default function AdminDashboard() {
       setActiveTab(tab);
     }
   }, [tab]);
+
+  // Scroll to top when tab changes
+  useEffect(() => {
+    const contentArea = document.querySelector('.lg\\:overflow-y-auto');
+    if (contentArea) {
+      contentArea.scrollTop = 0;
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [activeTab]);
 
   // Check if user has access to this view
   if (!auth?.role || !roleAccess[auth.role]) {
@@ -154,16 +164,8 @@ export default function AdminDashboard() {
         return <AdminRewardsControl />;
       case 'activity-logs':
         return <AdminActivityLogs />;
-      case 'revenue-chart':
-        return <AdminRevenueChart />;
       case 'notifications':
         return <AdminNotificationCenter />;
-      case 'role-matrix':
-        return <AdminRoleMatrix />;
-      case 'governance':
-        return <AdminGovernanceSettings />;
-      case 'risk-monitor':
-        return <AdminRiskMonitoring />;
       case 'webhooks':
         return <AdminWebhooks />;
       default:
@@ -267,23 +269,12 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
-
-          <div className="mt-6 border-t border-slate-200 pt-4">
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="w-full rounded-2xl border-red-200 text-red-600 hover:bg-red-50 justify-start"
-            >
-              <HiLogout className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
         </aside>
 
         <main className="flex min-h-0 flex-col lg:overflow-hidden">
           {/* Top Bar */}
           <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 px-5 py-4 backdrop-blur">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setSidebarOpen(true)}
@@ -294,15 +285,135 @@ export default function AdminDashboard() {
                 </button>
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Admin Dashboard</p>
-                  <h2 className="text-2xl font-semibold tracking-tight">
-                    {sidebarSections
-                      .flatMap(s => s.items)
-                      .find(i => i.id === activeTab)?.label || 'Dashboard'}
-                  </h2>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-slate-600">{auth?.email}</span>
+              <div className="flex items-center gap-3">
+                {/* Notification Icon */}
+                <div className="relative">
+                  <button
+                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors"
+                    onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)}
+                    aria-label="Notifications"
+                  >
+                    <HiBell className="h-5 w-5" />
+                    {notificationCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                        {notificationCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {notificationDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setNotificationDropdownOpen(false)}
+                        aria-hidden="true"
+                      />
+                      <div className="fixed left-4 right-4 top-20 sm:absolute sm:left-auto sm:right-0 sm:top-full mt-2 w-auto sm:w-96 max-h-[70vh] sm:max-h-[500px] overflow-hidden z-50 rounded-2xl border border-slate-200 bg-white shadow-lg">
+                        <div className="p-3 border-b border-slate-200 sticky top-0 bg-white z-10">
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-semibold text-slate-900">Admin Notifications</p>
+                            <span className="text-xs text-slate-500">{notificationCount} unread</span>
+                          </div>
+                        </div>
+                        <div className="max-h-[calc(70vh-60px)] sm:max-h-[400px] overflow-y-auto">
+                          <div
+                            className="p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer"
+                            onClick={() => setNotificationDropdownOpen(false)}
+                          >
+                            <div className="flex items-start gap-3">
+                              <HiBell className="mt-0.5 h-4 w-4 text-slate-600 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm text-slate-900">New verification request</p>
+                                <p className="mt-1 text-xs text-slate-600 break-words">John Doe submitted documents for Commercial Verification</p>
+                                <p className="mt-2 text-xs text-slate-400">2 hours ago</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            className="p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer"
+                            onClick={() => setNotificationDropdownOpen(false)}
+                          >
+                            <div className="flex items-start gap-3">
+                              <HiBell className="mt-0.5 h-4 w-4 text-slate-600 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm text-slate-900">Escalated case</p>
+                                <p className="mt-1 text-xs text-slate-600 break-words">Case #1234 has been escalated for executive review</p>
+                                <p className="mt-2 text-xs text-slate-400">5 hours ago</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            className="p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer"
+                            onClick={() => setNotificationDropdownOpen(false)}
+                          >
+                            <div className="flex items-start gap-3">
+                              <HiBell className="mt-0.5 h-4 w-4 text-slate-600 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm text-slate-900">System alert</p>
+                                <p className="mt-1 text-xs text-slate-600 break-words">Monthly distribution completed successfully</p>
+                                <p className="mt-2 text-xs text-slate-400">1 day ago</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Profile Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                    className="inline-flex h-10 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-slate-700 hover:bg-slate-50 transition-colors"
+                    aria-label="Profile menu"
+                  >
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--aureon-ink)] text-white text-xs font-semibold">
+                      {auth?.name?.substring(0, 2).toUpperCase() || auth?.email?.substring(0, 2).toUpperCase() || 'AD'}
+                    </div>
+                    <span className="hidden sm:inline text-sm font-medium">{auth?.name || auth?.email}</span>
+                  </button>
+
+                  {profileDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setProfileDropdownOpen(false)}
+                        aria-hidden="true"
+                      />
+                      <div className="absolute right-0 top-full mt-2 w-56 z-50 rounded-2xl border border-slate-200 bg-white shadow-lg">
+                        <div className="p-3 border-b border-slate-200">
+                          <p className="text-sm font-semibold text-slate-900">{auth?.name || auth?.email}</p>
+                          <p className="text-xs text-slate-500">{auth?.role?.replace(/_/g, ' ')}</p>
+                        </div>
+                        <div className="p-2">
+                          <button
+                            onClick={() => {
+                              setProfileDropdownOpen(false);
+                              navigate('/dashboard/admin/profile');
+                            }}
+                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 transition-colors"
+                          >
+                            <HiUser className="h-4 w-4" />
+                            Profile
+                          </button>
+                          <button
+                            onClick={() => {
+                              setProfileDropdownOpen(false);
+                              handleLogout();
+                            }}
+                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            <HiLogout className="h-4 w-4" />
+                            Logout
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </header>

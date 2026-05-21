@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { HiSearch, HiUser, HiMail, HiShieldCheck, HiClock } from 'react-icons/hi';
+import { HiSearch, HiUser, HiMail, HiShieldCheck, HiClock, HiX } from 'react-icons/hi';
 import { membersAPI, referenceAPI } from '../../../api/client';
 
 export default function AdminMembers() {
@@ -9,6 +9,8 @@ export default function AdminMembers() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [tierFilter, setTierFilter] = useState('ALL');
+  const [viewingMember, setViewingMember] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -29,6 +31,22 @@ export default function AdminMembers() {
       setTiers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteMember = async (memberId) => {
+    if (!window.confirm('Are you sure you want to delete this member?')) return;
+    
+    try {
+      setDeleting(true);
+      await membersAPI.delete(memberId);
+      setViewingMember(null);
+      fetchData();
+      toast.success('Member deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete member');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -70,13 +88,85 @@ export default function AdminMembers() {
 
   return (
     <div className="space-y-6">
+      {/* View Member Modal */}
+      {viewingMember && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/50"
+            onClick={() => setViewingMember(null)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-900">Member Details</h3>
+                <button
+                  onClick={() => setViewingMember(null)}
+                  className="p-2 hover:bg-slate-100 rounded-2xl transition-colors"
+                >
+                  <HiX className="text-slate-600" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Name</div>
+                  <div className="text-slate-900 font-medium">{viewingMember.user?.name || viewingMember.displayName || 'Unknown'}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Email</div>
+                  <div className="text-slate-900">{viewingMember.user?.email || 'N/A'}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Level</div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getTierColor(viewingMember.tier)}`}>
+                    {viewingMember.tier?.name || viewingMember.tier?.code || 'MEMBER'}
+                  </span>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Verification Status</div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getVerificationColor(viewingMember.verificationLevel)}`}>
+                    {viewingMember.verificationLevel || 'UNVERIFIED'}
+                  </span>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Joined On</div>
+                  <div className="text-slate-900">{new Date(viewingMember.createdAt).toLocaleString()}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-slate-600 mb-1">Member ID</div>
+                  <div className="text-slate-900 font-mono text-xs">{viewingMember.id}</div>
+                </div>
+                <div className="flex gap-2 pt-4 border-t">
+                  <button
+                    onClick={() => setViewingMember(null)}
+                    className="flex-1 px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-2xl transition-colors"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() => handleDeleteMember(viewingMember.id)}
+                    disabled={deleting}
+                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white rounded-2xl transition-colors"
+                  >
+                    {deleting ? 'Deleting...' : 'Delete Member'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Member Management</h2>
-          <p className="text-slate-600 mt-1">View and manage all platform members</p>
+          <h2 className="text-2xl font-bold text-slate-900">Members</h2>
+          <p className="text-slate-600 mt-1">See and manage all members</p>
         </div>
-        <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-colors w-full sm:w-auto">
-          Export Members
+        <button 
+          onClick={fetchData}
+          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl transition-colors w-full sm:w-auto"
+        >
+          Refresh
         </button>
       </div>
 
@@ -105,18 +195,18 @@ export default function AdminMembers() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12 text-slate-600">Loading members...</div>
+          <div className="text-center py-12 text-slate-600">Loading...</div>
         ) : filteredMembers.length === 0 ? (
-          <div className="text-center py-12 text-slate-600">No members found</div>
+          <div className="text-center py-12 text-slate-600">No members</div>
         ) : (
           <div className="overflow-x-auto -mx-6 px-6">
             <table className="w-full min-w-max">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Member</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Name</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Email</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Tier</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Verification</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Level</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Verified</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Joined</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-slate-700 whitespace-nowrap">Actions</th>
                 </tr>
@@ -153,8 +243,11 @@ export default function AdminMembers() {
                       </div>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <button className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-2xl transition-colors">
-                        View Profile
+                      <button 
+                        onClick={() => setViewingMember(member)}
+                        className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-sm rounded-2xl transition-colors"
+                      >
+                        View
                       </button>
                     </td>
                   </tr>
@@ -171,7 +264,7 @@ export default function AdminMembers() {
             <HiUser className="text-2xl text-slate-600 flex-shrink-0" />
             <div className="min-w-0">
               <div className="text-2xl font-bold text-slate-900">{members.length}</div>
-              <div className="text-sm text-slate-600">Total Members</div>
+              <div className="text-sm text-slate-600">All Members</div>
             </div>
           </div>
         </div>
@@ -196,7 +289,7 @@ export default function AdminMembers() {
                   return daysSince <= 30;
                 }).length}
               </div>
-              <div className="text-sm text-slate-600">New (30d)</div>
+              <div className="text-sm text-slate-600">New (30 days)</div>
             </div>
           </div>
         </div>

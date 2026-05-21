@@ -4,16 +4,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './hooks/useAuth';
-import PublicLayout from './components/public/PublicLayout';
-import HomePage from './pages/public/HomePage';
-import MembershipPage from './pages/public/MembershipPage';
-import TiersPage from './pages/public/TiersPage';
-import FoundingPage from './pages/public/FoundingPage';
-import OpportunitiesPage from './pages/public/OpportunitiesPage';
-import PartnersPage from './pages/public/PartnersPage';
-import RewardsPage from './pages/public/RewardsPage';
-import RequestAccessPage from './pages/public/RequestAccessPage';
-import AuthPage from './pages/public/AuthPage';
+import LoginPage from './pages/LoginPage';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
@@ -55,27 +46,18 @@ export default function App() {
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/membership" element={<MembershipPage />} />
-            <Route path="/tiers" element={<TiersPage />} />
-            <Route path="/founding" element={<FoundingPage />} />
-            <Route path="/opportunities" element={<OpportunitiesPage />} />
-            <Route path="/partners" element={<PartnersPage />} />
-            <Route path="/rewards" element={<RewardsPage />} />
-            <Route path="/request-access" element={<RequestAccessPage />} />
-          <Route path="/login" element={<AuthPage />} />
-            <Route path="/register" element={<AuthPage />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/verification-pending" element={<AuthPage />} />
-          </Route>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/dashboard/member" element={<ProtectedRoute><MemberDashboard /></ProtectedRoute>} />
+          <Route path="/dashboard/admin/:tab/:caseId" element={<ProtectedRoute allowedRoles={adminRoles}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/admin/:tab" element={<ProtectedRoute allowedRoles={adminRoles}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/dashboard/admin" element={<ProtectedRoute allowedRoles={adminRoles}><Navigate to="/dashboard/admin/overview" replace /></ProtectedRoute>} />
           <Route path="/dashboard/admin-settings" element={<ProtectedRoute allowedRoles={adminRoles}><AdminSettingsDashboard /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
         <ToastContainer
           position="top-right"
