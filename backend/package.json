@@ -6,9 +6,12 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
-    "start": "node src/server.js",
+    "build": "prisma generate",
+    "start": "prisma migrate deploy && node src/server.js",
+    "start:dev": "node src/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:seed": "node seed-admin.js",
     "seed:admin": "node seed-admin.js",
     "prisma:studio": "prisma studio",

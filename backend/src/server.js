@@ -226,13 +226,14 @@ function buildEarningsSummary(transactions) {
   return { total, bySource };
 }
 
-// CORS configuration - accept multiple localhost ports for development
+// CORS configuration - accept multiple localhost ports for development + production domain
 const corsOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
   'http://localhost:3000',
   'http://localhost:3001',
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ];
 app.use(cors({ 
   origin: (origin, callback) => {
@@ -251,6 +252,10 @@ app.use('/uploads', express.static(UPLOAD_ROOT));
 app.use((req, _res, next) => {
   console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
   next();
+});
+
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 app.get('/health', (_req, res) => {
