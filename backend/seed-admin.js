@@ -18,23 +18,16 @@ const tierSeed = [
 ];
 
 const classSeed = [
-  ['FOUNDING_MEMBER', 'Founding Member'],
   ['GENERAL_MEMBER', 'General Member'],
   ['CUSTOMER', 'Customer/Buyer'],
   ['CHANNEL_PARTNER', 'Channel Partner'],
-  ['AFFILIATE', 'Affiliate'],
-  ['INTERN', 'Intern'],
   ['DEVELOPER', 'Developer'],
-  ['EQUITY_AFFILIATE', 'Equity Affiliate'],
-  ['EQUITY_PARTNER', 'Equity Partner'],
   ['STRATEGIC_PARTNER', 'Strategic Partner'],
   ['OEM_PARTNER', 'OEM Partner'],
   ['TRADE_OPERATOR', 'Trade Operator'],
   ['CAPITAL_PARTICIPANT', 'Capital Participant'],
-  ['VERIFICATION_ACTOR', 'Verification Actor'],
   ['SETTLEMENT_PARTICIPANT', 'Settlement Participant'],
   ['INSTITUTIONAL_PARTICIPANT', 'Institutional Participant'],
-  ['THIRD_PARTY_OPERATOR', 'Third-Party Operator'],
 ];
 
 const demoUsers = [
@@ -51,7 +44,7 @@ const demoUsers = [
     email: 'legal@aureon9.com',
     name: 'Legal Compliance',
     role: 'LEGAL_COMPLIANCE',
-    participantClassCode: 'VERIFICATION_ACTOR',
+    participantClassCode: 'GENERAL_MEMBER',
     tierCode: 'EXECUTIVE',
     verificationLevel: 'GOVERNANCE_APPROVED',
     referralCode: 'LEGAL-9002',
@@ -60,7 +53,7 @@ const demoUsers = [
     email: 'qualifications@aureon9.com',
     name: 'Qualifications Desk',
     role: 'QUALIFICATIONS',
-    participantClassCode: 'VERIFICATION_ACTOR',
+    participantClassCode: 'GENERAL_MEMBER',
     tierCode: 'EXECUTIVE',
     verificationLevel: 'CAPITAL_VERIFIED',
     referralCode: 'QUAL-9003',
@@ -87,7 +80,7 @@ const demoUsers = [
     email: 'founding.member@aureon9.com',
     name: 'Founding Member One',
     role: 'MEMBER',
-    participantClassCode: 'FOUNDING_MEMBER',
+    participantClassCode: 'GENERAL_MEMBER',
     tierCode: 'FOUNDING',
     verificationLevel: 'GOVERNANCE_APPROVED',
     referralCode: 'FND-1001',
@@ -292,9 +285,9 @@ async function ensureVerificationCases(profileId, reviewerUserId) {
   }
 
   const cases = [
-    { requestedLevel: 'IDENTITY_VERIFIED', status: 'PENDING', priority: 'HIGH' },
-    { requestedLevel: 'COMMERCIAL_VERIFIED', status: 'UNDER_REVIEW', priority: 'MEDIUM' },
-    { requestedLevel: 'INSTITUTIONAL_VERIFIED', status: 'PENDING', priority: 'LOW' },
+    { requestedLevel: 'IDENTITY_VERIFIED', status: 'PENDING' },
+    { requestedLevel: 'COMMERCIAL_VERIFIED', status: 'UNDER_REVIEW' },
+    { requestedLevel: 'INSTITUTIONAL_VERIFIED', status: 'PENDING' },
   ];
 
   for (const caseData of cases) {
@@ -304,10 +297,8 @@ async function ensureVerificationCases(profileId, reviewerUserId) {
         requestedLevel: caseData.requestedLevel,
         status: caseData.status,
         queueStatus: caseData.status,
-        priority: caseData.priority,
-        risk: caseData.priority,
         submittedAt: new Date(),
-        reviewerId: reviewerUserId,
+        assignedReviewerId: reviewerUserId,
       },
     });
   }
@@ -330,7 +321,7 @@ async function main() {
       email: ADMIN_EMAIL,
       name: 'Super Admin',
       role: 'SUPER_ADMIN',
-      participantClassCode: 'FOUNDING_MEMBER',
+      participantClassCode: 'GENERAL_MEMBER',
       tierCode: 'SOVEREIGN',
       verificationLevel: 'GOVERNANCE_APPROVED',
       referralCode: 'ADMIN-0000',
