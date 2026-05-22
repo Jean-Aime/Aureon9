@@ -226,23 +226,26 @@ function buildEarningsSummary(transactions) {
   return { total, bySource };
 }
 
-// CORS configuration - accept multiple localhost ports for development + production domain
-const corsOrigins = [
+// CORS configuration
+const corsLocalOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
   'http://localhost:3000',
   'http://localhost:3001',
-  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ];
-app.use(cors({ 
+app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || corsOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS not allowed'));
-    }
-  }
+    if (!origin) return callback(null, true);
+    if (process.env.NODE_ENV === 'development') return callback(null, true);
+    if (corsLocalOrigins.includes(origin)) return callback(null, true);
+    // Allow any aureon9.com origin (www, apex, subdomains, pages.dev)
+    if (/https?:\/\/(.*\.)?aureon9\.(com|pages\.dev)$/.test(origin)) return callback(null, true);
+    // Allow FRONTEND_URL env var (checked dynamically)
+    if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return callback(null, true);
+    callback(new Error('CORS not allowed'));
+  },
+  credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
